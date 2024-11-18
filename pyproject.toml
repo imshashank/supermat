@@ -16,7 +16,7 @@ Home = "https://github.com/rishikreddy1717/supermat"
 
 [tool.poetry]
 name = "supermat"
-version = "0.1.0"
+version = "0.0.0"
 description = "<TO BE FILLED>"
 authors = ["Rishi Reddy <rishi.reddyk@gmail.com>"]
 license = "LICENSE"
@@ -29,7 +29,7 @@ fix-shallow-repository = true
 vcs = "git"
 metadata = false
 dirty = false
-strict = false
+strict = true
 pattern = "(?x)^v(?P<base>\\d+(\\.\\d+)*)(-(?P<stage>[a-zA-Z-_]+)\\.(?P<revision>\\d+))?$"
 bump = false
 latest-tag = true
@@ -66,6 +66,7 @@ langchain = "^0.3.7"
 nltk = "^3.8.1"
 pdf2image = "^1.17.0"
 pillow = "^10.3.0"
+pydantic = "^2.9.2"
 python-docx = "^1.1.0"
 python-pptx = "^0.6.23"
 rake-nltk = "^1.0.6"

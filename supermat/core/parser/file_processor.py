@@ -20,7 +20,7 @@ class FileProcessor:
     _file_extension_pattern = re.compile(r"^\.[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$")
 
     @staticmethod
-    def register(extension: str, converter: Converter | None = None):
+    def register(extension: str, converter: type[Converter] | None = None):
         if not extension.startswith("."):
             extension = f".{extension}"
         if not FileProcessor._file_extension_pattern.match(extension):
@@ -33,7 +33,7 @@ class FileProcessor:
                 "Only one parser can be registered for given extension."
             )
 
-        def decorator(parser: Parser) -> Parser:
+        def decorator(parser: type[Parser]) -> type[Parser]:
             if not issubclass(parser, Parser):
                 raise TypeError(f"{parser} is not a subclass of {Parser}")
             FileProcessor._handlers[extension] = Handler(parser=parser(), converter=converter() if converter else None)

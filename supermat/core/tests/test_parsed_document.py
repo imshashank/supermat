@@ -39,4 +39,4 @@ def test_verify_parsing(test_json: Path, parsed_document: ParsedDocumentType):
         )
     )
 
-    assert raw_json == parsed_json
+    assert parsed_json == raw_json

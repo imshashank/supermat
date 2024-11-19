@@ -40,10 +40,14 @@ class ValidationWarning(UserWarning):
 class CustomBaseModel(BaseModel):
     model_config = ConfigDict(populate_by_name=True, json_schema_extra={"by_alias": True}, extra="forbid")
     _original_alias: dict = PrivateAttr(init=True)
+    _unexisted_keys: set = PrivateAttr(init=True)
 
     def __init__(self, **data):
         aliases = {}
+        unexisted_keys = set()
         for field_name, field in self.model_fields.items():
+            if field_name not in data:
+                unexisted_keys.add(field_name)
             if field.validation_alias is None:
                 continue
             if isinstance(field.validation_alias, AliasChoices):
@@ -54,18 +58,20 @@ class CustomBaseModel(BaseModel):
                 aliases[field_name] = field.alias
         super().__init__(**data)
         self._original_alias = aliases
+        self._unexisted_keys = unexisted_keys
 
     @model_serializer(mode="wrap")
     def serialize_model(self, nxt: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        # TODO (@legendof-selda) Currently there is no nice way to serialize the fields in dict dump
-        # Need to figure out a way later. Pydantic docs haven't been very helpful.
         serialized = nxt(self)
         aliased_values = {
             renamed_field_name: serialized.pop(field_name)
             for field_name, renamed_field_name in self._original_alias.items()
         }
         serialized.update(aliased_values)
-        return serialized
+        cleaned_serialized = {
+            field_name: value for field_name, value in serialized.items() if field_name not in self._unexisted_keys
+        }
+        return cleaned_serialized
 
 
 class BaseChunkProperty(CustomBaseModel):

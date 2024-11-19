@@ -163,3 +163,9 @@ def load_parsed_document(path: Path | str) -> ParsedDocumentType:
         return ParsedDocument.validate_python(raw_doc[root_key])
     else:
         raise orjson.JSONDecodeError("Invalid JSON Format")
+
+
+def export_parsed_document(document: ParsedDocumentType, output_path: Path | str, **kwargs):
+    output_path = Path(output_path)
+    with output_path.open("wb+") as fp:
+        fp.write(ParsedDocument.dump_json(document, **kwargs))

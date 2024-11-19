@@ -11,9 +11,12 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PrivateAttr,
+    SerializerFunctionWrapHandler,
     TypeAdapter,
     ValidationInfo,
     field_validator,
+    model_serializer,
 )
 
 
@@ -21,15 +24,46 @@ class ValidationWarning(UserWarning):
     """Custom warning for validation issues in Pydantic models."""
 
 
-class BaseChunkProperty(BaseModel):
+class CustomBaseModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, json_schema_extra={"by_alias": True}, extra="forbid")
+    _original_alias: dict = PrivateAttr(init=True)
+
+    def __init__(self, **data):
+        aliases = {}
+        for field_name, field in self.model_fields.items():
+            if field.validation_alias is None:
+                continue
+            if isinstance(field.validation_alias, AliasChoices):
+                for alias in field.validation_alias.choices:
+                    if alias in data:
+                        aliases[field_name] = alias
+            else:
+                aliases[field_name] = field.alias
+        super().__init__(**data)
+        self._original_alias = aliases
+
+    @model_serializer(mode="wrap")
+    def serialize_model(self, nxt: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # TODO (@legendof-selda) Currently there is no nice way to serialize the fields in dict dump
+        # Need to figure out a way later. Pydantic docs haven't been very helpful.
+        serialized = nxt(self)
+        aliased_values = {
+            renamed_field_name: serialized.pop(field_name)
+            for field_name, renamed_field_name in self._original_alias.items()
+        }
+        serialized.update(aliased_values)
+        return serialized
+
+
+class BaseChunkProperty(CustomBaseModel):
     ObjectID: int = Field(validation_alias=AliasChoices("ObjectID", "ObjectId"))
-    Bounds: tuple[float, float, float, float]
+    Bounds: tuple[float | int, float | int, float | int, float | int]
     Page: int
     Path: str
     attributes: dict[str, Any] | None = None
 
 
-class FontProperties(BaseModel):
+class FontProperties(CustomBaseModel):
     alt_family_name: str
     embedded: bool
     encoding: str
@@ -52,8 +86,7 @@ class TextChunkProperty(BaseChunkProperty):
 ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")]
 
 
-class BaseChunk(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, json_schema_extra={"by_alias": True})
+class BaseChunk(CustomBaseModel):
     type_: Literal["Text", "Image", "Footnote"] = Field(alias="type")
     structure: str
 
@@ -77,9 +110,10 @@ class TextChunk(BaseTextChunk):
 class ImageChunk(BaseChunk, BaseChunkProperty):
     type_: Literal["Image"] = Field("Image", alias="type")
     figure: str
-    figure_object: Base64Bytes | None = Field(alias="figure-object")
+    figure_object: Base64Bytes | None = Field(alias="figure-object", repr=False)
 
     @field_validator("figure_object", mode="before")
+    @classmethod
     def validate_data(cls, value: Base64Bytes | None, info: ValidationInfo):  # noqa: U100
         # TODO (@legendof-selda): figure out a way to find the path where this fails.
         # NOTE: This shouldn't be allowed, but in the sample we have a case where the images aren't saved.
@@ -89,9 +123,8 @@ class ImageChunk(BaseChunk, BaseChunkProperty):
         return value
 
 
-class FootnoteChunk(BaseTextChunk):
+class FootnoteChunk(TextChunk):
     type_: Literal["Footnote"] = Field("Footnote", alias="type")
-    text: str
 
 
 ParsedDocumentType: TypeAlias = list[ChunkModelType]

@@ -1,3 +1,4 @@
+# TODO (@legendof-selda): use alias for all attributes that are not pythonic
 from __future__ import annotations
 
 import base64

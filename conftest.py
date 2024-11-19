@@ -26,6 +26,6 @@ else:
     warn("Could not find a parent directory which contained the supermat module.")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_json() -> Path:
     return BASE_DIR / "test_samples/test.json"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypeAlias, Union
 from warnings import warn
@@ -7,9 +8,10 @@ from warnings import warn
 import orjson
 from pydantic import (
     AliasChoices,
-    Base64Bytes,
+    Base64Encoder,
     BaseModel,
     ConfigDict,
+    EncodedBytes,
     Field,
     PrivateAttr,
     SerializerFunctionWrapHandler,
@@ -18,6 +20,17 @@ from pydantic import (
     field_validator,
     model_serializer,
 )
+
+
+class Base64EncoderSansNewline(Base64Encoder):
+    @classmethod
+    def encode(cls, value: bytes) -> bytes:
+        return base64.b64encode(value)
+
+
+# NOTE: we dont use pydantic Base64Bytes since it includes embedding newlines
+# https://github.com/pydantic/pydantic/issues/9072
+Base64Bytes = Annotated[bytes, EncodedBytes(encoder=Base64EncoderSansNewline)]
 
 
 class ValidationWarning(UserWarning):
@@ -80,7 +93,7 @@ class TextChunkProperty(BaseChunkProperty):
     Font: FontProperties
     HasClip: bool
     Lang: str | None = None
-    TextSize: float
+    TextSize: float | int
 
 
 ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")]

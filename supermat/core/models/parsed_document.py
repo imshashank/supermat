@@ -47,16 +47,20 @@ class CustomBaseModel(BaseModel):
         aliases = {}
         unexisted_keys = set()
         for field_name, field in self.model_fields.items():
-            if field_name not in data:
-                unexisted_keys.add(field_name)
-            if field.validation_alias is None:
-                continue
+            alias_found = False
             if isinstance(field.validation_alias, AliasChoices):
                 for alias in field.validation_alias.choices:
                     if alias in data:
                         aliases[field_name] = alias
-            else:
+                        alias_found = True
+                        break
+            elif field.alias is not None:
                 aliases[field_name] = field.alias
+                alias_found = True
+
+            if (alias_found and aliases[field_name] not in data) or (not alias_found and field_name not in data):
+                unexisted_keys.add(aliases[field_name] if alias_found else field_name)
+
         super().__init__(**data)
         self._original_alias = aliases
         self._unexisted_keys = unexisted_keys

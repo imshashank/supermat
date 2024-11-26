@@ -1,4 +1,3 @@
-# TODO (@legendof-selda): use alias for all attributes that are not pythonic
 from __future__ import annotations
 
 import base64
@@ -80,10 +79,10 @@ class CustomBaseModel(BaseModel):
 
 
 class BaseChunkProperty(CustomBaseModel):
-    ObjectID: int = Field(validation_alias=AliasChoices("ObjectID", "ObjectId"))
-    Bounds: tuple[float | int, float | int, float | int, float | int]
-    Page: int
-    Path: str
+    object_id: int = Field(validation_alias=AliasChoices("ObjectID", "ObjectId"))
+    bounds: tuple[float | int, float | int, float | int, float | int] = Field(alias="Bounds")
+    page: int = Field(alias="Page")
+    path: str | None = Field(None, alias="Path")
     attributes: dict[str, Any] | None = None
 
 
@@ -101,10 +100,10 @@ class FontProperties(CustomBaseModel):
 
 
 class TextChunkProperty(BaseChunkProperty):
-    Font: FontProperties
-    HasClip: bool
-    Lang: str | None = None
-    TextSize: float | int
+    font: FontProperties = Field(alias="Font")
+    hasclip: bool | None = Field(None, alias="HasClip")
+    lang: str | None = Field(None, alias="Lang")
+    text_size: float | int = Field(alias="TextSize")
 
 
 ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")]

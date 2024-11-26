@@ -20,7 +20,7 @@ def test_load_parsed_doc(parsed_document: ParsedDocumentType):
     assert first_section.type_ == "Text"
     assert first_section.structure == "0.1.0"
     assert len(first_section.key)
-    assert first_section.properties.Page == 0
+    assert first_section.properties.page == 0
 
     assert isinstance(doc[44], ImageChunk) and doc[44].structure == "7.2.0"
 

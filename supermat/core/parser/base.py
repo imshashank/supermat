@@ -26,7 +26,7 @@ class Converter(ABC):
     @abstractmethod
     def convert(self, file_path: Path) -> Path:  # noqa: U100
         """
-        Converts input file to another file type.
+        Converts input file to another file type and saves it. The saved file path is returned.
 
         Args:
             file_path (Path): Input file.

@@ -53,8 +53,8 @@ class CustomBaseModel(BaseModel):
                         aliases[field_name] = alias
                         alias_found = True
                         break
-            elif field.alias is not None:
-                aliases[field_name] = field.alias
+            elif field.alias is not None or field.validation_alias is not None:
+                aliases[field_name] = field.alias or field.validation_alias
                 alias_found = True
 
             if (alias_found and aliases[field_name] not in data) or (not alias_found and field_name not in data):

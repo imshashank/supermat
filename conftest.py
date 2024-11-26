@@ -29,3 +29,13 @@ else:
 @pytest.fixture(scope="session")
 def test_json() -> Path:
     return BASE_DIR / "test_samples/test.json"
+
+
+@pytest.fixture(scope="session")
+def test_pdf() -> Path:
+    return BASE_DIR / "test_samples/test.pdf"
+
+
+@pytest.fixture(scope="session")
+def test_docx() -> Path:
+    return BASE_DIR / "test_samples/test.docx"

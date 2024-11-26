@@ -20,8 +20,8 @@ class SimpleChunker(BaseChunker):
             metadata=BaseChunkMetadata(
                 type=section.type_,
                 structure=section.structure,
-                page_number=section.properties.Page,
-                source=section.properties.Path,
+                page_number=section.properties.page,
+                source=section.properties.path,
                 chunk_meta=section,
             ),
         )

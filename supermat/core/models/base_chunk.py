@@ -5,13 +5,19 @@ from typing import TypeAlias
 
 from pydantic import BaseModel, Field, TypeAdapter, computed_field
 
-from supermat.core.models.parsed_document import BaseChunk, ChunkModelType
+from supermat.core.models.parsed_document import (
+    BaseChunk,
+    FootnoteChunk,
+    ImageChunk,
+    TextChunk,
+)
 
 
 class BaseChunkMetadata(BaseChunk):
     page_number: int
     source: str | None = None
-    chunk_meta: ChunkModelType = Field(exclude=True)
+    # NOTE: not exactly sure why we can't use ChunkModelType instead?
+    chunk_meta: TextChunk | ImageChunk | FootnoteChunk = Field(exclude=True, discriminator="type_")
 
     @computed_field
     @cached_property

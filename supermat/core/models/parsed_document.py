@@ -72,68 +72,71 @@ class CustomBaseModel(BaseModel):
             for field_name, renamed_field_name in self._original_alias.items()
         }
         serialized.update(aliased_values)
+        _unexisted_keys = self._unexisted_keys - {
+            field.alias or field_name for field_name, field in self.model_fields.items() if field.frozen
+        }
         cleaned_serialized = {
-            field_name: value for field_name, value in serialized.items() if field_name not in self._unexisted_keys
+            field_name: value for field_name, value in serialized.items() if field_name not in _unexisted_keys
         }
         return cleaned_serialized
 
 
 class BaseChunkProperty(CustomBaseModel):
-    object_id: int = Field(validation_alias=AliasChoices("ObjectID", "ObjectId"))
-    bounds: tuple[float | int, float | int, float | int, float | int] = Field(alias="Bounds")
-    page: int = Field(alias="Page")
-    path: str | None = Field(None, alias="Path")
+    object_id: int | None = Field(None, validation_alias=AliasChoices("ObjectID", "ObjectId"))
+    bounds: tuple[float | int, float | int, float | int, float | int] = Field(validation_alias="Bounds")
+    page: int = Field(validation_alias="Page")
+    path: str | None = Field(None, validation_alias="Path")
     attributes: dict[str, Any] | None = None
 
 
-class FontProperties(CustomBaseModel):
-    alt_family_name: str
-    embedded: bool
-    encoding: str
-    family_name: str
-    font_type: str
-    italic: bool
-    monospaced: bool
+class FontProperties(CustomBaseModel, extra="allow"):
+    alt_family_name: str | None = None
+    embedded: bool | None = None
+    encoding: str | None = None
+    family_name: str | None = None
+    font_type: str | None = None
+    italic: bool | None = None
+    monospaced: bool | None = None
     name: str
-    subset: bool
-    weight: int
+    subset: bool | None = None
+    weight: int | None = None
 
 
 class TextChunkProperty(BaseChunkProperty):
-    font: FontProperties = Field(alias="Font")
-    hasclip: bool | None = Field(None, alias="HasClip")
-    lang: str | None = Field(None, alias="Lang")
-    text_size: float | int = Field(alias="TextSize")
+    font: FontProperties = Field(validation_alias="Font")
+    hasclip: bool | None = Field(None, validation_alias="HasClip")
+    lang: str | None = Field(None, validation_alias="Lang")
+    text_size: float | int = Field(validation_alias="TextSize")
 
 
 ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")]
 
 
 class BaseChunk(CustomBaseModel):
-    type_: Literal["Text", "Image", "Footnote"] = Field(alias="type")
+    type_: Literal["Text", "Image", "Footnote"] = Field(alias="type", frozen=True)
     structure: str
 
 
 class BaseTextChunk(BaseChunk):
     text: str
     key: list[str]
-    properties: BaseChunkProperty
+    properties: BaseChunkProperty | None = None
     sentences: list[ChunkModelType] | None = None
 
 
 class TextChunk(BaseTextChunk):
-    type_: Literal["Text"] = Field("Text", alias="type")
+    type_: Literal["Text"] = Field("Text", alias="type", frozen=True)
     speaker: dict | None = None
     document: str | None = None
     timestamp: str | None = None
     annotations: list[str] | None = None
-    properties: TextChunkProperty
+    properties: TextChunkProperty | None = None
 
 
 class ImageChunk(BaseChunk, BaseChunkProperty):
-    type_: Literal["Image"] = Field("Image", alias="type")
-    figure: str
-    figure_object: Base64Bytes | None = Field(alias="figure-object", repr=False)
+    type_: Literal["Image"] = Field("Image", alias="type", frozen=True)
+    figure: str | None = None
+    figure_object: Base64Bytes | None = Field(validation_alias="figure-object", repr=False)
 
     @field_validator("figure_object", mode="before")
     @classmethod
@@ -147,7 +150,7 @@ class ImageChunk(BaseChunk, BaseChunkProperty):
 
 
 class FootnoteChunk(TextChunk):
-    type_: Literal["Footnote"] = Field("Footnote", alias="type")
+    type_: Literal["Footnote"] = Field("Footnote", alias="type", frozen=True)
 
 
 ParsedDocumentType: TypeAlias = list[ChunkModelType]

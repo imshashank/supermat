@@ -16,7 +16,7 @@ def default(obj):
 
 
 def create_page(page: pymupdf.Page) -> dict:
-    page_data = page.get_text("dict")["blocks"]
+    page_data = page.get_text("dict", sort=True)["blocks"]
     return {"number": page.number, "rect": page.rect, "text": page.get_text(), "blocks": page_data}
 
 

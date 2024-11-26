@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -33,7 +33,7 @@ class Line(BaseModel):
 
 class Block(BaseModel):
     number: int
-    type_: int = Field(alias="type")
+    type_: Literal[0, 1] = Field(alias="type")
     bbox: List[float]
     lines: Optional[List[Line]] = None
     width: Optional[int] = None

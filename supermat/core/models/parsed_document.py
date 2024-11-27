@@ -57,7 +57,7 @@ class CustomBaseModel(BaseModel):
                 aliases[field_name] = field.alias or field.validation_alias
                 alias_found = True
 
-            if (alias_found and aliases[field_name] not in data) or (not alias_found and field_name not in data):
+            if not ((alias_found and aliases[field_name] in data) or (field_name in data)):
                 unexisted_keys.add(aliases[field_name] if alias_found else field_name)
 
         super().__init__(**data)
@@ -89,7 +89,8 @@ class BaseChunkProperty(CustomBaseModel):
     attributes: dict[str, Any] | None = None
 
 
-class FontProperties(CustomBaseModel, extra="allow"):
+class FontProperties(CustomBaseModel):
+    model_config = ConfigDict(extra="allow")
     alt_family_name: str | None = None
     embedded: bool | None = None
     encoding: str | None = None

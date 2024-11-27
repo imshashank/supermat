@@ -32,7 +32,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
         for block in page.blocks:
             if block.type_ == 0:
                 # TODO (@legendof-selda): create keys
-                sentence_chunks = []
+                sentence_chunks: list[TextChunk] = []
                 for line_no, line in enumerate(block.lines):
                     # NOTE: we are combining spans to lines as spans are not very relevant.
                     # All lines have a signle span
@@ -64,7 +64,15 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                     structure=get_structure(page.number, block.number),
                     text=" ".join(sentence_chunk.text for sentence_chunk in sentence_chunks),
                     key=[],
-                    sentences=sentence_chunks,
+                    sentences=sentence_chunks if len(sentence_chunks) > 1 else None,
+                    properties=(
+                        None
+                        if len(sentence_chunks) <= 1
+                        else (
+                            sentence_chunks[0].properties.model_dump(exclude=["Path", "Bounds"])
+                            | {"Path": get_path(page.number, block.number), "Bounds": block.bbox}
+                        )
+                    ),
                 )
             elif block.type_ == 1:
                 assert block.image is not None

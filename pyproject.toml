@@ -49,7 +49,10 @@ inline-quotes = "double"
 known-modules = ":[supermat]"
 application-names = "supermat"
 max-expression-complexity = 10
-per-file-ignores = []
+per-file-ignores = [
+    'supermat/core/parser/adobe_parser/parser.py:I900',
+    'supermat/core/parser/pymupdf_parser/utils.py:I900',
+]
 
 [tool.isort]
 profile = "black"

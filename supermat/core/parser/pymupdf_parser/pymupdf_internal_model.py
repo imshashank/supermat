@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import Annotated, List, Literal
 
 from pydantic import BaseModel, Field
+
+from supermat.core.models.parsed_document import Base64Bytes
 
 
 class Rect(BaseModel):
@@ -28,31 +30,43 @@ class Line(BaseModel):
     spans: List[Span]
     wmode: int
     direction: List[float] = Field(alias="dir")
-    bbox: List[float]
+    bbox: tuple[float, float, float, float]
 
 
 class Block(BaseModel):
-    number: int
     type_: Literal[0, 1] = Field(alias="type")
-    bbox: List[float]
-    lines: Optional[List[Line]] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
-    ext: Optional[str] = None
-    colorspace: Optional[int] = None
-    xres: Optional[int] = None
-    yres: Optional[int] = None
-    bpc: Optional[int] = None
-    transform: Optional[List[float]] = None
-    size: Optional[int] = None
-    image: Optional[str] = None
+    number: int
+    bbox: tuple[float, float, float, float]
+
+
+class TextBlock(Block):
+    type_: Literal[0] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default=0, alias="type", frozen=True
+    )
+    lines: list[Line]
+
+
+class ImageBlock(Block):
+    type_: Literal[1] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default=1, alias="type", frozen=True
+    )
+    width: int
+    height: int
+    ext: str
+    colorspace: int
+    xres: int
+    yres: int
+    bpc: int
+    transform: list[float]
+    size: int
+    image: Base64Bytes
 
 
 class Page(BaseModel):
     number: int  # page_number
     rect: Rect
     text: str
-    blocks: List[Block]
+    blocks: list[Annotated[TextBlock | ImageBlock, Field(discriminator="type_")]]
 
 
 class PyMuPDFDocument(BaseModel):

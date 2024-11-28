@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import Annotated, Any, Literal, TypeAlias, Union
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Sequence, TypeAlias, Union
 from warnings import warn
 
 import orjson
@@ -39,12 +39,12 @@ class ValidationWarning(UserWarning):
 
 class CustomBaseModel(BaseModel):
     model_config = ConfigDict(populate_by_name=True, json_schema_extra={"by_alias": True}, extra="forbid")
-    _original_alias: dict = PrivateAttr(init=True)
-    _unexisted_keys: set = PrivateAttr(init=True)
+    _original_alias: dict[str, str] = PrivateAttr()
+    _unexisted_keys: set[str] = PrivateAttr()
 
-    def __init__(self, **data):
-        aliases = {}
-        unexisted_keys = set()
+    def __init__(self, **data: dict[str, Any]):
+        aliases: dict[str, str] = {}
+        unexisted_keys: set[str] = set()
         for field_name, field in self.model_fields.items():
             alias_found = False
             if isinstance(field.validation_alias, AliasChoices):
@@ -54,7 +54,10 @@ class CustomBaseModel(BaseModel):
                         alias_found = True
                         break
             elif field.alias is not None or field.validation_alias is not None:
-                aliases[field_name] = field.alias or field.validation_alias
+                alias = field.alias or field.validation_alias
+                if TYPE_CHECKING:
+                    assert isinstance(alias, str)
+                aliases[field_name] = alias
                 alias_found = True
 
             if not ((alias_found and aliases[field_name] in data) or (field_name in data)):
@@ -82,10 +85,10 @@ class CustomBaseModel(BaseModel):
 
 
 class BaseChunkProperty(CustomBaseModel):
-    object_id: int | None = Field(None, validation_alias=AliasChoices("ObjectID", "ObjectId"))
+    object_id: int | None = Field(default=None, validation_alias=AliasChoices("ObjectID", "ObjectId"))
     bounds: tuple[float | int, float | int, float | int, float | int] = Field(validation_alias="Bounds")
     page: int = Field(validation_alias="Page")
-    path: str | None = Field(None, validation_alias="Path")
+    path: str | None = Field(default=None, validation_alias="Path")
     attributes: dict[str, Any] | None = None
 
 
@@ -105,8 +108,8 @@ class FontProperties(CustomBaseModel):
 
 class TextChunkProperty(BaseChunkProperty):
     font: FontProperties = Field(validation_alias="Font")
-    hasclip: bool | None = Field(None, validation_alias="HasClip")
-    lang: str | None = Field(None, validation_alias="Lang")
+    hasclip: bool | None = Field(default=None, validation_alias="HasClip")
+    lang: str | None = Field(default=None, validation_alias="Lang")
     text_size: float | int = Field(validation_alias="TextSize")
 
 
@@ -122,20 +125,24 @@ class BaseTextChunk(BaseChunk):
     text: str
     key: list[str]
     properties: BaseChunkProperty | None = None
-    sentences: list[ChunkModelType] | None = None
+    sentences: Sequence[ChunkModelType] | None = None
 
 
 class TextChunk(BaseTextChunk):
-    type_: Literal["Text"] = Field("Text", alias="type", frozen=True)
-    speaker: dict | None = None
+    type_: Literal["Text"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default="Text", alias="type", frozen=True
+    )
+    speaker: dict[str, Any] | None = None
     document: str | None = None
     timestamp: str | None = None
     annotations: list[str] | None = None
-    properties: TextChunkProperty | None = None
+    properties: TextChunkProperty | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
 
 
 class ImageChunk(BaseChunk, BaseChunkProperty):
-    type_: Literal["Image"] = Field("Image", alias="type", frozen=True)
+    type_: Literal["Image"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default="Image", alias="type", frozen=True
+    )
     figure: str | None = None
     figure_object: Base64Bytes | None = Field(validation_alias="figure-object", repr=False)
 
@@ -151,7 +158,9 @@ class ImageChunk(BaseChunk, BaseChunkProperty):
 
 
 class FootnoteChunk(TextChunk):
-    type_: Literal["Footnote"] = Field("Footnote", alias="type", frozen=True)
+    type_: Literal["Footnote"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        default="Footnote", alias="type", frozen=True
+    )
 
 
 ParsedDocumentType: TypeAlias = list[ChunkModelType]
@@ -161,16 +170,16 @@ ParsedDocument = TypeAdapter(ParsedDocumentType)
 def load_parsed_document(path: Path | str) -> ParsedDocumentType:
     path = Path(path)
     with path.open("rb") as fp:
-        raw_doc = orjson.loads(fp.read())
+        raw_doc: list[dict[str, Any]] | dict[str, list[dict[str, Any]]] = orjson.loads(fp.read())
 
-    if isinstance(raw_doc, list):
-        return ParsedDocument.validate_python(raw_doc)
-    elif isinstance(raw_doc, dict) and len(raw_doc.keys()) == 1:
+    if isinstance(raw_doc, dict) and len(raw_doc.keys()) == 1:
         root_key = next(iter(raw_doc.keys()))
         warn(f"The json document contains a root node {next(iter(raw_doc.keys()))}.", ValidationWarning)
         return ParsedDocument.validate_python(raw_doc[root_key])
+    elif isinstance(raw_doc, list):
+        return ParsedDocument.validate_python(raw_doc)
     else:
-        raise orjson.JSONDecodeError("Invalid JSON Format")
+        raise ValueError("Invalid JSON Format")
 
 
 def export_parsed_document(document: ParsedDocumentType, output_path: Path | str, **kwargs):

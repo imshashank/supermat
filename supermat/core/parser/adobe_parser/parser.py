@@ -61,6 +61,8 @@ def create_image_chunk(
         with archive.open(file_path) as f:
             file_data = base64.b64encode(f.read())
 
+        assert element.Bounds is not None
+        assert element.Page is not None
         image_chunk = ImageChunk(
             structure=element_structure,
             object_id=element.ObjectID,
@@ -77,6 +79,8 @@ def create_image_chunk(
 
 
 def create_text_properties(element: Element) -> TextChunkProperty:
+    assert element.Bounds is not None
+    assert element.Page is not None
     return TextChunkProperty(
         object_id=element.ObjectID,
         bounds=element.Bounds,
@@ -152,18 +156,19 @@ def convert_adobe_to_parsed_document(
     figure_count = 0
     chunks: list[TextChunk | ImageChunk | FootnoteChunk] = []
 
+    # TODO (@legendof-selda): not dealing with tables for now.
     for element in adobe_data.elements:
         path = split_path(element.Path)
-        if path[1] == "L" and path[2].startswith("LI") and path[-1] == "Lbl":
-            # "//Document/L/LI/Lbl"
+        if path[1][0] == "L" and path[2].startswith("LI") and path[-1] == "Lbl":
+            # "//Document/L*/LI/Lbl"
             section_number += 1
             passage_number = 0
-        elif path[1] == "H":
-            # "//Document/H/*
+        elif path[1][0] == "H":
+            # "//Document/H*
             section_number += 1
             passage_number = 0
-        elif path[1] == "P" or path[1].startswith("P"):
-            # "//Document/H/*
+        elif path[1][0] == "P":
+            # "//Document/P*
             passage_number += 1
         else:
             passage_number += 1
@@ -177,7 +182,7 @@ def convert_adobe_to_parsed_document(
                     figure_count += 1
                     image_chunk.figure = f"{figure_count} - {Path(file_path).name}"
                     chunks.append(image_chunk)
-        elif element.Text is not None:
+        elif element.Text is not None and not (path[1].startswith("Table") or element.Bounds is None):
             chunk = create_text_chunk(element, element_structure)
             chunks.append(chunk)
 

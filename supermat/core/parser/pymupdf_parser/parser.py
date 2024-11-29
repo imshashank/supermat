@@ -12,7 +12,6 @@ from supermat.core.models.parsed_document import (
     TextChunkProperty,
 )
 from supermat.core.parser.base import Parser
-from supermat.core.parser.file_processor import FileProcessor
 from supermat.core.parser.pymupdf_parser.pymupdf_internal_model import (
     ImageBlock,
     PyMuPDFDocument,
@@ -97,7 +96,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
     return ParsedDocument.validate_python(chunks)
 
 
-@FileProcessor.register(".pdf")
+# @FileProcessor.register(".pdf")
 class PyMuPDFParser(Parser):
     def parse(self, file_path: Path) -> ParsedDocumentType:
         parsed_pdf = parse_pdf(file_path)

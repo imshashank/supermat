@@ -1,8 +1,10 @@
+import base64
 import os
+import re
 import zipfile
 from pathlib import Path
+from warnings import warn
 
-import orjson
 from adobe.pdfservices.operation.auth.service_principal_credentials import (
     ServicePrincipalCredentials,
 )
@@ -25,8 +27,21 @@ from adobe.pdfservices.operation.pdfjobs.result.extract_pdf_result import (
 )
 from dotenv import find_dotenv, load_dotenv
 
-from supermat.core.models.parsed_document import ParsedDocument, ParsedDocumentType
+from supermat.core.models.parsed_document import (
+    FontProperties,
+    FootnoteChunk,
+    ImageChunk,
+    ParsedDocument,
+    ParsedDocumentType,
+    TextChunk,
+    TextChunkProperty,
+)
 from supermat.core.parser.adobe_parser._utils import CachedFile
+from supermat.core.parser.adobe_parser.adobe_internal_model import (
+    AdobeStructuredData,
+    Element,
+)
+from supermat.core.parser.utils import get_keywords, get_structure
 
 load_dotenv(find_dotenv())
 
@@ -35,11 +50,145 @@ PDF_SERVICES_CLIENT_SECRET = os.environ.get("PDF_SERVICES_CLIENT_SECRET")
 CACHED_FILE = CachedFile()
 
 
+def split_path(path: str) -> list[str]:
+    return path.removeprefix("//").split("/")
+
+
+def create_image_chunk(
+    file_path: str, element: Element, archive: zipfile.ZipFile, element_structure: str
+) -> ImageChunk | None:
+    try:
+        with archive.open(file_path) as f:
+            file_data = base64.b64encode(f.read())
+
+        image_chunk = ImageChunk(
+            structure=element_structure,
+            object_id=element.ObjectID,
+            bounds=element.Bounds,
+            page=element.Page,
+            path=file_path,
+            figure=file_path,
+            figure_object=file_data,
+        )
+        return image_chunk
+    except FileNotFoundError:
+        warn(f"Warning: File not found - {file_path}", ResourceWarning)
+        return None
+
+
+def create_text_properties(element: Element) -> TextChunkProperty:
+    return TextChunkProperty(
+        object_id=element.ObjectID,
+        bounds=element.Bounds,
+        page=element.Page,
+        path=element.Path,
+        font=FontProperties(
+            name=element.Font.name if element.Font else "Unknown",
+            family_name=element.Font.family_name if element.Font else None,
+            alt_family_name=element.Font.alt_family_name if element.Font else None,
+            font_type=element.Font.font_type if element.Font else None,
+            weight=element.Font.weight if element.Font else None,
+            italic=element.Font.italic if element.Font else None,
+            monospaced=element.Font.monospaced if element.Font else None,
+            embedded=element.Font.embedded if element.Font else None,
+            encoding=element.Font.encoding if element.Font else None,
+            subset=element.Font.subset if element.Font else None,
+        ),
+        text_size=element.TextSize or 0,
+        lang=element.Lang,
+        hasclip=element.HasClip,
+    )
+
+
+def _create_sentence(sentence_structure: str, sentence: str, paragraph_chunk: TextChunk) -> TextChunk:
+    copy_dict = paragraph_chunk.model_dump(include={"key", "properties"}, exclude_unset=True) | {
+        "structure": sentence_structure,
+        "text": sentence,
+        "key": get_keywords(sentence),
+    }
+    return TextChunk(**copy_dict)
+
+
+def append_sentences(text_chunk: TextChunk) -> TextChunk:
+    sentences = [sentence.strip() for sentence in re.split(r"[^.!?]+[.!?]", text_chunk.text)]
+    if not sentences:
+        return text_chunk
+    section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
+    sentence_chunks = [
+        _create_sentence(get_structure(*section_parts, sentence_number), sentence, text_chunk)
+        for sentence_number, sentence in enumerate(sentences)
+    ]
+    text_chunk.sentences = sentence_chunks
+    return text_chunk
+
+
+def create_text_chunk(element: Element, element_structure: str) -> TextChunk | FootnoteChunk:
+    assert element.Text
+    if element.Path and element.Path.startswith("//Document/Footnote"):
+        chunk = FootnoteChunk(
+            structure=element_structure,
+            text=element.Text,
+            key=[],
+            properties=create_text_properties(element),
+        )
+    else:
+        chunk = TextChunk(
+            structure=element_structure,
+            text=element.Text,
+            key=[],
+            properties=create_text_properties(element),
+        )
+        chunk = append_sentences(chunk)
+    chunk.key = get_keywords(chunk.text)
+    return chunk
+
+
+def convert_adobe_to_parsed_document(
+    adobe_data: AdobeStructuredData,
+    archive: zipfile.ZipFile,
+) -> ParsedDocumentType:
+    section_number = 0
+    passage_number = 0
+    figure_count = 0
+    chunks: list[TextChunk | ImageChunk | FootnoteChunk] = []
+
+    for element in adobe_data.elements:
+        path = split_path(element.Path)
+        if path[1] == "L" and path[2].startswith("LI") and path[-1] == "Lbl":
+            # "//Document/L/LI/Lbl"
+            section_number += 1
+            passage_number = 0
+        elif path[1] == "H":
+            # "//Document/H/*
+            section_number += 1
+            passage_number = 0
+        elif path[1] == "P" or path[1].startswith("P"):
+            # "//Document/H/*
+            passage_number += 1
+        else:
+            passage_number += 1
+
+        element_structure = get_structure(section_number, passage_number)
+
+        if element.filePaths:
+            for file_path in element.filePaths:
+                image_chunk = create_image_chunk(file_path, element, archive, element_structure)
+                if image_chunk:
+                    figure_count += 1
+                    image_chunk.figure = f"{figure_count} - {Path(file_path).name}"
+                    chunks.append(image_chunk)
+        elif element.Text is not None:
+            chunk = create_text_chunk(element, element_structure)
+            chunks.append(chunk)
+
+    return ParsedDocument.validate_python(chunks)
+
+
 def load_adobe_zip(zip_file: Path) -> ParsedDocumentType:
     with zipfile.ZipFile(zip_file, "r") as archive:
         structured_data_file = archive.open("structuredData.json")
-        structured_data = orjson.loads(structured_data_file.read())
-        return ParsedDocument.validate_python(structured_data["elements"])
+        structured_data = AdobeStructuredData.model_validate_json(structured_data_file.read())
+        return convert_adobe_to_parsed_document(structured_data, archive)
 
 
 def adobe_parse(pdf_file: Path) -> Path:

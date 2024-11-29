@@ -19,8 +19,8 @@ except OSError:
 
 def get_structure(*args: int, min_length: int = 3) -> str:
     if len(args) < min_length:
-        args = args + (-1,) * (min_length - len(args))
-    return ".".join(map(lambda x: str(x + 1), args))
+        args = args + (0,) * (min_length - len(args))
+    return ".".join(map(lambda x: str(x), args))
 
 
 def extract_spacy_keywords(text: str) -> set[str]:

@@ -40,7 +40,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                     # This can lead to losing certain info like underline, bold, etc for small parts of texts.
                     first_span = line.spans[0]
 
-                    structure = get_structure(page.number, block.number, line_no)
+                    structure = get_structure(page.number + 1, block.number + 1, line_no + 1)
 
                     sentence_chunk = TextChunk(
                         structure=structure,
@@ -64,7 +64,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
 
                 text = " ".join(sentence_chunk.text for sentence_chunk in sentence_chunks)
                 chunk = TextChunk(
-                    structure=get_structure(page.number, block.number),
+                    structure=get_structure(page.number + 1, block.number + 1),
                     text=text,
                     key=get_keywords(text),
                     sentences=sentence_chunks if len(sentence_chunks) > 1 else None,
@@ -81,7 +81,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                 )
             elif isinstance(block, ImageBlock):
                 chunk = ImageChunk(
-                    structure=get_structure(page.number, block.number),
+                    structure=get_structure(page.number + 1, block.number + 1),
                     bounds=block.bbox,
                     page=page.number,
                     path=get_path(page.number, block.number),

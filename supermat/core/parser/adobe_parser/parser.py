@@ -119,10 +119,12 @@ def append_sentences(text_chunk: TextChunk) -> TextChunk:
         return text_chunk
     section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
     sentence_chunks = [
-        _create_sentence(get_structure(*section_parts, sentence_number), sentence, text_chunk)
+        _create_sentence(get_structure(*section_parts, sentence_number + 1), sentence, text_chunk)
         for sentence_number, sentence in enumerate(sentences)
     ]
     text_chunk.sentences = sentence_chunks
+    # TODO (@legendof-selda): workaround. need to get this working correctly.
+    text_chunk._unexisted_keys.remove("sentences")
     return text_chunk
 
 

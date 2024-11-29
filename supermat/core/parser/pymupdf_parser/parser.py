@@ -19,12 +19,7 @@ from supermat.core.parser.pymupdf_parser.pymupdf_internal_model import (
     TextBlock,
 )
 from supermat.core.parser.pymupdf_parser.utils import parse_pdf
-
-
-def get_structure(*args: int, min_length: int = 3) -> str:
-    if len(args) < min_length:
-        args = args + (-1,) * (min_length - len(args))
-    return ".".join(map(lambda x: str(x + 1), args))
+from supermat.core.parser.utils import get_structure
 
 
 def get_path(*args: int) -> str:

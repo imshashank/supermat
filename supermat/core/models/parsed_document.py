@@ -73,6 +73,7 @@ class CustomBaseModel(BaseModel):
         aliased_values = {
             renamed_field_name: serialized.pop(field_name)
             for field_name, renamed_field_name in self._original_alias.items()
+            if field_name in serialized
         }
         serialized.update(aliased_values)
         _unexisted_keys = self._unexisted_keys - {

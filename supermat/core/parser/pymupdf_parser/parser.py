@@ -12,19 +12,13 @@ from supermat.core.models.parsed_document import (
     TextChunkProperty,
 )
 from supermat.core.parser.base import Parser
-from supermat.core.parser.file_processor import FileProcessor
 from supermat.core.parser.pymupdf_parser.pymupdf_internal_model import (
     ImageBlock,
     PyMuPDFDocument,
     TextBlock,
 )
 from supermat.core.parser.pymupdf_parser.utils import parse_pdf
-
-
-def get_structure(*args: int, min_length: int = 3) -> str:
-    if len(args) < min_length:
-        args = args + (-1,) * (min_length - len(args))
-    return ".".join(map(lambda x: str(x + 1), args))
+from supermat.core.parser.utils import get_keywords, get_structure
 
 
 def get_path(*args: int) -> str:
@@ -61,17 +55,18 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                             # TODO (@legendof-selda): need to figure out a way to get attributes if possible
                         ),
                         text=line_text,
-                        key=[],
+                        key=get_keywords(line_text),
                     )
                     sentence_chunks.append(sentence_chunk)
 
                 if TYPE_CHECKING:
                     assert sentence_chunks[0].properties
 
+                text = " ".join(sentence_chunk.text for sentence_chunk in sentence_chunks)
                 chunk = TextChunk(
                     structure=get_structure(page.number, block.number),
-                    text=" ".join(sentence_chunk.text for sentence_chunk in sentence_chunks),
-                    key=[],
+                    text=text,
+                    key=get_keywords(text),
                     sentences=sentence_chunks if len(sentence_chunks) > 1 else None,
                     properties=(
                         None
@@ -102,7 +97,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
     return ParsedDocument.validate_python(chunks)
 
 
-@FileProcessor.register(".pdf")
+# @FileProcessor.register(".pdf")
 class PyMuPDFParser(Parser):
     def parse(self, file_path: Path) -> ParsedDocumentType:
         parsed_pdf = parse_pdf(file_path)

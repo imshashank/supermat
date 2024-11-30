@@ -47,6 +47,8 @@ load_dotenv(find_dotenv())
 
 PDF_SERVICES_CLIENT_ID = os.environ.get("PDF_SERVICES_CLIENT_ID")
 PDF_SERVICES_CLIENT_SECRET = os.environ.get("PDF_SERVICES_CLIENT_SECRET")
+MIN_SENTENCE_LEN = int(os.environ.get("MIN_SENTENCE_LEN", 2))
+
 CACHED_FILE = CachedFile()
 
 
@@ -116,7 +118,12 @@ def _create_sentence(sentence_structure: str, sentence: str, paragraph_chunk: Te
 def append_sentences(text_chunk: TextChunk) -> TextChunk:
     # NOTE: This pattern works for unicode (non english) characters as well.
     setence_pattern = r"(?<=[^A-Z].[.?!])\s+(?=[^a-z])"
-    sentences = [sentence.strip() for sentence in re.split(setence_pattern, text_chunk.text)]
+    # NOTE: sometimes some rogue substrings are found and we want to discard them.
+    sentences = [
+        sentence.strip()
+        for sentence in re.split(setence_pattern, text_chunk.text)
+        if len(sentence.strip()) > MIN_SENTENCE_LEN
+    ]
     if not sentences or len(sentences) == 1:
         return text_chunk
     section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
@@ -151,6 +158,35 @@ def create_text_chunk(element: Element, element_structure: str) -> TextChunk | F
     return chunk
 
 
+def process_list_items(
+    elements: list[Element], starting_element_number: int, element_structure: str
+) -> tuple[TextChunk | None, int]:
+    next_elements = elements[starting_element_number:]
+    if not next_elements:
+        return None, 0
+
+    all_list_item_text = []
+    element_number = 0
+    path = split_path(next_elements[0].Path)
+    current_list_path = path[1]
+    for element_number, element in enumerate(next_elements):
+        path = split_path(element.Path)
+        if path[1] != current_list_path:
+            break
+        if element.Text:
+            all_list_item_text.append(element.Text)
+
+    list_chunk_text = "\n".join(all_list_item_text)
+    list_chunk = TextChunk(
+        structure=element_structure,
+        text=list_chunk_text,
+        key=get_keywords(list_chunk_text),
+        properties=create_text_properties(next_elements[0]),
+    )
+    list_chunk = append_sentences(list_chunk)
+    return list_chunk, element_number - 1
+
+
 def convert_adobe_to_parsed_document(
     adobe_data: AdobeStructuredData,
     archive: zipfile.ZipFile,
@@ -161,7 +197,12 @@ def convert_adobe_to_parsed_document(
     chunks: list[TextChunk | ImageChunk | FootnoteChunk] = []
 
     # TODO (@legendof-selda): not dealing with tables for now.
-    for element in adobe_data.elements:
+    skip_elements = 0
+    for element_number, element in enumerate(adobe_data.elements):
+        if skip_elements:
+            skip_elements -= 1
+            continue
+
         path = split_path(element.Path)
         if path[1][0] == "L" and path[2].startswith("LI") and path[-1] == "Lbl":
             # "//Document/L*/LI/Lbl"
@@ -189,6 +230,10 @@ def convert_adobe_to_parsed_document(
                     figure_count += 1
                     image_chunk.figure = f"{figure_count} - {Path(file_path).name}"
                     chunks.append(image_chunk)
+        elif path[1][0] == "L":
+            chunk, skip_elements = process_list_items(adobe_data.elements, element_number, element_structure)
+            if chunk:
+                chunks.append(chunk)
         elif element.Text is not None and not (path[1].startswith("Table") or element.Bounds is None):
             chunk = create_text_chunk(element, element_structure)
             chunks.append(chunk)

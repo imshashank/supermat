@@ -6,7 +6,7 @@ from supermat.core.parser.base import Parser
 from supermat.core.parser.file_processor import FileProcessor
 
 
-@FileProcessor.register(".pdf")
+@FileProcessor.register(".pdf", main=True)
 class AdobeParser(Parser):
     def parse(self, file_path: Path) -> ParsedDocumentType:
         return parse_file(file_path)

@@ -34,3 +34,6 @@ class Converter(ABC):
         Returns:
             Path: Output file after conversion.
         """
+
+    def __call__(self, file_path: Path) -> Path:
+        return self.convert(file_path)

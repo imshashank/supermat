@@ -116,7 +116,7 @@ def _create_sentence(sentence_structure: str, sentence: str, paragraph_chunk: Te
 def append_sentences(text_chunk: TextChunk) -> TextChunk:
     # NOTE: This pattern works for unicode (non english) characters as well.
     setence_pattern = r"(?<=[^A-Z].[.?!])\s+(?=[^a-z])"
-    sentences = [sentence.strip() for sentence in re.findall(setence_pattern, text_chunk.text)]
+    sentences = [sentence.strip() for sentence in re.split(setence_pattern, text_chunk.text)]
     if not sentences or len(sentences) == 1:
         return text_chunk
     section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]

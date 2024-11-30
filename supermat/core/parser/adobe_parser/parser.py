@@ -114,8 +114,10 @@ def _create_sentence(sentence_structure: str, sentence: str, paragraph_chunk: Te
 
 
 def append_sentences(text_chunk: TextChunk) -> TextChunk:
-    sentences = [sentence.strip() for sentence in re.split(r"[^.!?]+[.!?]", text_chunk.text)]
-    if not sentences:
+    # NOTE: This pattern works for unicode (non english) characters as well.
+    setence_pattern = r"(?<=[^A-Z].[.?!])\s+(?=[^a-z])"
+    sentences = [sentence.strip() for sentence in re.findall(setence_pattern, text_chunk.text)]
+    if not sentences or len(sentences) == 1:
         return text_chunk
     section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
     sentence_chunks = [
@@ -163,8 +165,7 @@ def convert_adobe_to_parsed_document(
         path = split_path(element.Path)
         if path[1][0] == "L" and path[2].startswith("LI") and path[-1] == "Lbl":
             # "//Document/L*/LI/Lbl"
-            section_number += 1
-            passage_number = 0
+            passage_number += 1
         elif path[1][0] == "H":
             # "//Document/H*
             section_number += 1
@@ -172,8 +173,12 @@ def convert_adobe_to_parsed_document(
         elif path[1][0] == "P":
             # "//Document/P*
             passage_number += 1
+        elif path[1] == "Title":
+            section_number += 1
+            passage_number = 0
         else:
             passage_number += 1
+        # TODO Collapse lists into a single paragraph and list items will sentence. collapse paragraphs as well+
 
         element_structure = get_structure(section_number, passage_number)
 
@@ -207,27 +212,23 @@ def adobe_parse(pdf_file: Path) -> Path:
     with pdf_file.open("rb") as fp:
         input_stream = fp.read()
 
-    # Initial setup, create credentials instance
+    # NOTE: code extracted from
+    # https://developer.adobe.com/document-services/docs/overview/pdf-extract-api/quickstarts/python/
     credentials = ServicePrincipalCredentials(
         client_id=PDF_SERVICES_CLIENT_ID, client_secret=PDF_SERVICES_CLIENT_SECRET
     )
 
-    # Creates a PDF Services instance
     pdf_services = PDFServices(credentials=credentials)
 
-    # Creates an asset(s) from source file(s) and upload
     input_asset = pdf_services.upload(input_stream=input_stream, mime_type=PDFServicesMediaType.PDF)
 
-    # Create parameters for the job
     extract_pdf_params = ExtractPDFParams(
         elements_to_extract=[ExtractElementType.TEXT, ExtractElementType.TABLES],
         elements_to_extract_renditions=[ExtractRenditionsElementType.TABLES, ExtractRenditionsElementType.FIGURES],
     )
 
-    # Creates a new job instance
     extract_pdf_job = ExtractPDFJob(input_asset=input_asset, extract_pdf_params=extract_pdf_params)
 
-    # Submit the job and gets the job result
     location = pdf_services.submit(extract_pdf_job)
     pdf_services_response = pdf_services.get_job_result(location, ExtractPDFResult)
 

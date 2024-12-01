@@ -2,7 +2,16 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Sequence, TypeAlias, Union
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Literal,
+    Sequence,
+    TypeAlias,
+    Union,
+    overload,
+)
 from warnings import warn
 
 import orjson
@@ -20,6 +29,8 @@ from pydantic import (
     field_validator,
     model_serializer,
 )
+
+from supermat.core.utils import is_subsection
 
 
 class Base64EncoderSansNewline(Base64Encoder):
@@ -120,6 +131,15 @@ ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "Footnote
 class BaseChunk(CustomBaseModel):
     type_: Literal["Text", "Image", "Footnote"] = Field(alias="type", frozen=True)
     structure: str
+
+    @overload
+    def is_subsection(self, sub_section: BaseChunk) -> bool: ...  # noqa: U100, E704
+
+    @overload
+    def is_subsection(self, sub_section: str) -> bool: ...  # noqa: U100, E704
+
+    def is_subsection(self, sub_section: BaseChunk | str) -> bool:
+        return is_subsection(sub_section if isinstance(sub_section, str) else sub_section.structure, self.structure)
 
 
 class BaseTextChunk(BaseChunk):

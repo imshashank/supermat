@@ -41,7 +41,8 @@ from supermat.core.parser.adobe_parser.adobe_internal_model import (
     AdobeStructuredData,
     Element,
 )
-from supermat.core.parser.utils import get_keywords, get_structure, split_structure
+from supermat.core.parser.utils import get_keywords
+from supermat.core.utils import get_structure, split_structure
 
 load_dotenv(find_dotenv())
 

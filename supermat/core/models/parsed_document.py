@@ -125,7 +125,9 @@ class TextChunkProperty(BaseChunkProperty):
     text_size: float | int = Field(validation_alias="TextSize")
 
 
-ChunkModelType: TypeAlias = Annotated[Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")]
+ChunkModelForwardRefType: TypeAlias = Annotated[
+    Union["TextChunk", "ImageChunk", "FootnoteChunk"], Field(discriminator="type_")
+]
 
 
 class BaseChunk(CustomBaseModel):
@@ -146,7 +148,7 @@ class BaseTextChunk(BaseChunk):
     text: str
     key: list[str]
     properties: BaseChunkProperty | None = None
-    sentences: Sequence[ChunkModelType] | None = None
+    sentences: Sequence[ChunkModelForwardRefType] | None = None
 
 
 class TextChunk(BaseTextChunk):
@@ -184,6 +186,8 @@ class FootnoteChunk(TextChunk):
     )
 
 
+# NOTE: had to do this again as there were so many issues with ForwardRefs
+ChunkModelType: TypeAlias = Annotated[TextChunk | ImageChunk | FootnoteChunk, Field(discriminator="type_")]
 ParsedDocumentType: TypeAlias = list[ChunkModelType]
 ParsedDocument = TypeAdapter(ParsedDocumentType)
 

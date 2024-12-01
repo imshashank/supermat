@@ -41,7 +41,7 @@ from supermat.core.parser.adobe_parser.adobe_internal_model import (
     AdobeStructuredData,
     Element,
 )
-from supermat.core.parser.utils import get_keywords, get_structure
+from supermat.core.parser.utils import get_keywords, get_structure, split_structure
 
 load_dotenv(find_dotenv())
 
@@ -126,7 +126,7 @@ def append_sentences(text_chunk: TextChunk) -> TextChunk:
     ]
     if not sentences or len(sentences) == 1:
         return text_chunk
-    section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
+    section_parts = split_structure(text_chunk.structure)[:-1]
     sentence_chunks = [
         _create_sentence(get_structure(*section_parts, sentence_number + 1), sentence, text_chunk)
         for sentence_number, sentence in enumerate(sentences)

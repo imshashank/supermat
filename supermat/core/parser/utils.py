@@ -23,6 +23,10 @@ def get_structure(*args: int, min_length: int = 3) -> str:
     return ".".join(map(lambda x: str(x), args))
 
 
+def split_structure(structure: str) -> tuple[int, ...]:
+    return tuple(map(int, structure.split(".")))
+
+
 def extract_spacy_keywords(text: str) -> set[str]:
     doc = nlp(text)
     # Extract words with more than 4 characters, numerics, nouns, verbs, adverbs, and adjectives excluding pronouns

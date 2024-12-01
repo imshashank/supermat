@@ -1,59 +1,82 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from collections.abc import Iterator
-from functools import wraps
-from pathlib import Path
+from functools import cached_property
+from typing import Any
 
 from langchain.schema.vectorstore import VectorStore
-from langchain_core.document_loaders import BaseLoader
+from langchain_core.callbacks.manager import (
+    AsyncCallbackManagerForRetrieverRun,
+    CallbackManagerForRetrieverRun,
+)
 from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
+from pydantic import Field
 
 from supermat.core.models.parsed_document import BaseTextChunk, ParsedDocumentType
-from supermat.core.parser import FileProcessor
 
 
-class SupermatDocLoader(BaseLoader):
+class SupermatRetriever(BaseRetriever):
     """
-    Load document via Supermat parser.
-    This loader is meant to be used with the Supermat Langchain componenets only and not as standalone.
-    The document returned by this class is a json stringified version that is meant to used later internally.
+    Supermat Langchain Custom Retriever.
+    This uses any Langchain VectorStore and overrides the documents retrieval methods to make it work for Supermat.
+
+
+    ``` python
+    from supermat.langchain.bindings import SupermatRetriever
+    from langchain_chroma import Chroma
+    from langchain_huggingface import HuggingFaceEmbeddings
+
+    retriever = SupermatRetriever(
+        parsed_docs=FileProcessor.process_file(pdf_file_path),
+        document_name=pdf_file_path.stem,
+        vector_store=Chroma(
+            embedding_function=HuggingFaceEmbeddings(
+                model_name="thenlper/gte-base",
+            )
+        ),
+    )
+    ```
     """
 
-    def __init__(self, file_path: Path, include_non_text_chunks: bool):
-        self._parsed_document = FileProcessor.parse_file(file_path)
-        self.include_non_text_chunks = include_non_text_chunks
+    parsed_docs: ParsedDocumentType = Field(exclude=True, strict=False, repr=False)
+    document_name: str
+    vector_store: VectorStore
+    vector_store_retriver_kwargs: dict[str, Any] = {}
 
-    @property
-    def parsed_document(self) -> ParsedDocumentType:
-        return self._parsed_document
+    @cached_property
+    def vector_store_retriver(self):
+        return self.vector_store.as_retriever(**self.vector_store_retriver_kwargs)
 
-    def lazy_load(self) -> Iterator[Document]:
-        yield from (
-            Document(page_content=chunk.model_dump_json())
-            for chunk in self.parsed_document
-            if self.include_non_text_chunks or isinstance(chunk, BaseTextChunk)
+    def model_post_init(self, __context: Any) -> None:
+        super().model_post_init(__context)
+        # TODO (@legendof-selda): integrate the chunker class here instead.
+        self.vector_store.add_documents(
+            [
+                Document(
+                    sentence.text,
+                    metadata={"structure": sentence.structure, "id": f"{self.document_name}-{sentence.structure}"},
+                )
+                for chunk in self.parsed_docs
+                if isinstance(chunk, BaseTextChunk)
+                for sentence in (chunk.sentences if chunk.sentences else [chunk])
+                if isinstance(sentence, BaseTextChunk)
+            ]
         )
 
+    def _get_higher_section(self, documents: list[Document]) -> list[Document]:
+        return [
+            Document(chunk.text, metadata=dict(structure=chunk.structure, properties=chunk.properties, key=chunk.key))
+            for chunk in self.parsed_docs
+            if isinstance(chunk, BaseTextChunk)
+            and any(chunk.is_subsection(doc.metadata.get("structure", "")) for doc in documents)
+        ]
 
-class DelegateToBaseStoreMeta(ABCMeta):
-    def __new__(cls, name, bases, namespace, **kwargs):
-        # Collect all abstract methods
-        abstract_methods = {attr for base in bases for attr in getattr(base, "__abstractmethods__", set())}
+    def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> list[Document]:
+        documents = self.vector_store_retriver._get_relevant_documents(query, run_manager=run_manager)
+        return self._get_higher_section(documents)
 
-        # Add methods from base_store if not explicitly defined
-        for method in abstract_methods:
-            if method not in namespace:
-
-                def delegate_method(self, *args, _method=method, **kwargs):
-                    base_method = getattr(self.base_store, _method)
-                    return base_method(*args, **kwargs)
-
-                namespace[method] = delegate_method
-
-        return super().__new__(cls, name, bases, namespace, **kwargs)
-
-
-class SupermatVectorStore(VectorStore, metaclass=DelegateToBaseStoreMeta):
-    def __init__(self, base_store: VectorStore):
-        self.base_store = base_store
+    async def _aget_relevant_documents(
+        self, query: str, *, run_manager: AsyncCallbackManagerForRetrieverRun
+    ) -> list[Document]:
+        documents = await self.vector_store_retriver._aget_relevant_documents(query, run_manager=run_manager)
+        return self._get_higher_section(documents)

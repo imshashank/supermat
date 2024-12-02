@@ -41,6 +41,7 @@ class SupermatRetriever(BaseRetriever):
     parsed_docs: ParsedDocumentType = Field(exclude=True, strict=False, repr=False)
     vector_store: VectorStore
     vector_store_retriver_kwargs: dict[str, Any] = {}
+    max_chunk_length: int = 8000
 
     @cached_property
     def vector_store_retriver(self):
@@ -65,7 +66,9 @@ class SupermatRetriever(BaseRetriever):
     def _get_higher_section(self, documents: list[Document]) -> list[Document]:
         return [
             Document(
-                chunk.text,
+                # this max chunk clipping is only a temp solution
+                # ideally the intelligent chunker class will take care of this.
+                chunk.text[: self.max_chunk_length],
                 metadata=dict(
                     structure=chunk.structure,
                     properties=chunk.properties,

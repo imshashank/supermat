@@ -39,7 +39,6 @@ class SupermatRetriever(BaseRetriever):
     """
 
     parsed_docs: ParsedDocumentType = Field(exclude=True, strict=False, repr=False)
-    document_name: str
     vector_store: VectorStore
     vector_store_retriver_kwargs: dict[str, Any] = {}
 
@@ -54,7 +53,7 @@ class SupermatRetriever(BaseRetriever):
             [
                 Document(
                     sentence.text,
-                    metadata={"structure": sentence.structure, "id": f"{self.document_name}-{sentence.structure}"},
+                    metadata={"structure": sentence.structure, "id": f"{chunk.document}-{sentence.structure}"},
                 )
                 for chunk in self.parsed_docs
                 if isinstance(chunk, BaseTextChunk)
@@ -65,7 +64,15 @@ class SupermatRetriever(BaseRetriever):
 
     def _get_higher_section(self, documents: list[Document]) -> list[Document]:
         return [
-            Document(chunk.text, metadata=dict(structure=chunk.structure, properties=chunk.properties, key=chunk.key))
+            Document(
+                chunk.text,
+                metadata=dict(
+                    structure=chunk.structure,
+                    properties=chunk.properties,
+                    key=chunk.key,
+                    id=f"{chunk.document}-{chunk.structure}",
+                ),
+            )
             for chunk in self.parsed_docs
             if isinstance(chunk, BaseTextChunk)
             and any(chunk.is_subsection(doc.metadata.get("structure", "")) for doc in documents)

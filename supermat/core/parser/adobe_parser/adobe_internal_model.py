@@ -57,7 +57,7 @@ class Attributes(BaseModel):
     NumCol: Optional[int] = None
     NumRow: Optional[int] = None
     BlockAlign: Optional[str] = None
-    BorderColor: Optional[List[Union[Optional[int], List[int]]]] = None
+    BorderColor: Optional[List[Union[Optional[int | float], List[int | float]]]] = None
     BorderStyle: Optional[Union[str, List[str]]] = None
     BorderThickness: Optional[Union[float, List[float]]] = None
     ColIndex: Optional[int] = None

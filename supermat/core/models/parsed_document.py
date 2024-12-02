@@ -133,6 +133,7 @@ ChunkModelForwardRefType: TypeAlias = Annotated[
 class BaseChunk(CustomBaseModel):
     type_: Literal["Text", "Image", "Footnote"] = Field(alias="type", frozen=True)
     structure: str
+    document: str | None = None
 
     @overload
     def is_subsection(self, sub_section: BaseChunk) -> bool: ...  # noqa: U100, E704
@@ -156,7 +157,6 @@ class TextChunk(BaseTextChunk):
         default="Text", alias="type", frozen=True
     )
     speaker: dict[str, Any] | None = None
-    document: str | None = None
     timestamp: str | None = None
     annotations: list[str] | None = None
     properties: TextChunkProperty | None = None  # pyright: ignore[reportIncompatibleVariableOverride]

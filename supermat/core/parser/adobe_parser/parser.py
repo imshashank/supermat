@@ -242,11 +242,16 @@ def convert_adobe_to_parsed_document(
     return ParsedDocument.validate_python(chunks)
 
 
-def load_adobe_zip(zip_file: Path) -> ParsedDocumentType:
+def load_adobe_zip(pdf_file: Path, zip_file: Path) -> ParsedDocumentType:
     with zipfile.ZipFile(zip_file, "r") as archive:
         structured_data_file = archive.open("structuredData.json")
         structured_data = AdobeStructuredData.model_validate_json(structured_data_file.read())
-        return convert_adobe_to_parsed_document(structured_data, archive)
+        documents = convert_adobe_to_parsed_document(structured_data, archive)
+        document_name = pdf_file.stem
+        for chunk in documents:
+            chunk.document = document_name
+
+        return documents
 
 
 def adobe_parse(pdf_file: Path) -> Path:
@@ -292,4 +297,4 @@ def adobe_parse(pdf_file: Path) -> Path:
 
 def parse_file(pdf_file: Path) -> ParsedDocumentType:
     zip_file = adobe_parse(pdf_file)
-    return load_adobe_zip(zip_file)
+    return load_adobe_zip(pdf_file, zip_file)

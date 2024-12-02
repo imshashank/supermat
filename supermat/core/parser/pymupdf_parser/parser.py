@@ -19,7 +19,8 @@ from supermat.core.parser.pymupdf_parser.pymupdf_internal_model import (
     TextBlock,
 )
 from supermat.core.parser.pymupdf_parser.utils import parse_pdf
-from supermat.core.parser.utils import get_keywords, get_structure
+from supermat.core.parser.utils import get_keywords
+from supermat.core.utils import get_structure
 
 
 def get_path(*args: int) -> str:

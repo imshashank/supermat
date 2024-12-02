@@ -20,7 +20,9 @@ def document_chunks(parsed_document: ParsedDocumentType) -> DocumentChunksType:
 
 def same_doc(parsed_document: ChunkModelType, chunk_document: ChunkDocument) -> bool:
     return (
-        parsed_document.text == chunk_document.text and parsed_document.structure == chunk_document.metadata.structure
+        isinstance(parsed_document, BaseTextChunk)
+        and parsed_document.text == chunk_document.text
+        and parsed_document.structure == chunk_document.metadata.structure
     )
 
 

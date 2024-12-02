@@ -39,7 +39,7 @@ class Handler:
 
     def process_file(self, file_path: Path | str, **kwargs) -> Path:
         file_path = Path(file_path)
-        file_ext = file_path.suffix
+        file_ext = file_path.suffix.lower()
         parsed_document = self.parse_file(file_path)
         parsed_out_file = file_path.with_suffix(f"{file_ext}.json")
         export_parsed_document(parsed_document, parsed_out_file, **kwargs)
@@ -64,6 +64,7 @@ class FileProcessor:
         extension: str, *, converters: type[Converter] | Iterable[type[Converter]] | None = None, main: bool = False
     ):
         # NOTE: this only works if the register has reached. Meaning we need to manually import it in __init__.py
+        extension = extension.lower()
         if not extension.startswith("."):
             extension = f".{extension}"
         if not FileProcessor._file_extension_pattern.match(extension):
@@ -94,7 +95,7 @@ class FileProcessor:
     @staticmethod
     def get_main_handler(file_path: Path | str) -> Handler:
         file_path = Path(file_path)
-        file_ext = file_path.suffix
+        file_ext = file_path.suffix.lower()
 
         handler_id = FileProcessor._main_handlers.get(file_ext, None)
         if handler_id is None:
@@ -109,7 +110,7 @@ class FileProcessor:
     @staticmethod
     def get_handlers(file_path: Path | str) -> dict[str, Handler]:
         file_path = Path(file_path)
-        file_ext = file_path.suffix
+        file_ext = file_path.suffix.lower()
 
         return {
             handle_name: FileProcessor.get_handler(handle_name)

@@ -41,7 +41,8 @@ from supermat.core.parser.adobe_parser.adobe_internal_model import (
     AdobeStructuredData,
     Element,
 )
-from supermat.core.parser.utils import get_keywords, get_structure
+from supermat.core.parser.utils import get_keywords
+from supermat.core.utils import get_structure, split_structure
 
 load_dotenv(find_dotenv())
 
@@ -126,7 +127,7 @@ def append_sentences(text_chunk: TextChunk) -> TextChunk:
     ]
     if not sentences or len(sentences) == 1:
         return text_chunk
-    section_parts = [int(s) for s in text_chunk.structure.split(".")[:-1]]
+    section_parts = split_structure(text_chunk.structure)[:-1]
     sentence_chunks = [
         _create_sentence(get_structure(*section_parts, sentence_number + 1), sentence, text_chunk)
         for sentence_number, sentence in enumerate(sentences)
@@ -241,11 +242,16 @@ def convert_adobe_to_parsed_document(
     return ParsedDocument.validate_python(chunks)
 
 
-def load_adobe_zip(zip_file: Path) -> ParsedDocumentType:
+def load_adobe_zip(pdf_file: Path, zip_file: Path) -> ParsedDocumentType:
     with zipfile.ZipFile(zip_file, "r") as archive:
         structured_data_file = archive.open("structuredData.json")
         structured_data = AdobeStructuredData.model_validate_json(structured_data_file.read())
-        return convert_adobe_to_parsed_document(structured_data, archive)
+        documents = convert_adobe_to_parsed_document(structured_data, archive)
+        document_name = pdf_file.stem
+        for chunk in documents:
+            chunk.document = document_name
+
+        return documents
 
 
 def adobe_parse(pdf_file: Path) -> Path:
@@ -291,4 +297,4 @@ def adobe_parse(pdf_file: Path) -> Path:
 
 def parse_file(pdf_file: Path) -> ParsedDocumentType:
     zip_file = adobe_parse(pdf_file)
-    return load_adobe_zip(zip_file)
+    return load_adobe_zip(pdf_file, zip_file)

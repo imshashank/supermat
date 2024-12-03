@@ -48,6 +48,7 @@ load_dotenv(find_dotenv())
 
 PDF_SERVICES_CLIENT_ID = os.environ.get("PDF_SERVICES_CLIENT_ID")
 PDF_SERVICES_CLIENT_SECRET = os.environ.get("PDF_SERVICES_CLIENT_SECRET")
+MAX_PARAGRAPH_LEN = int(os.environ.get("MAX_PARAGRAPH_LEN", 8000))
 MIN_SENTENCE_LEN = int(os.environ.get("MIN_SENTENCE_LEN", 2))
 
 CACHED_FILE = CachedFile()
@@ -188,6 +189,30 @@ def process_list_items(
     return list_chunk, element_number - 1
 
 
+def split_element_chunk(element: Element) -> list[Element]:
+    assert element.Text
+    if len(element.Text) < MAX_PARAGRAPH_LEN:
+        return [element]
+    chunks = []
+    current_chunk = []
+
+    for word in element.Text:
+        # Check if adding the next word would exceed the max_length
+        if sum(len(w) for w in current_chunk) + len(current_chunk) + len(word) > MAX_PARAGRAPH_LEN:
+            # Add current chunk to chunks and start a new one
+            chunks.append(" ".join(current_chunk))
+            current_chunk = [word]
+        else:
+            current_chunk.append(word)
+
+    # Add the last chunk if any words remain
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    split_elements = [Element(**(element.model_dump(exclude={"Text"}) | {"Text": chunk})) for chunk in chunks]
+    return split_elements
+
+
 def convert_adobe_to_parsed_document(
     adobe_data: AdobeStructuredData,
     archive: zipfile.ZipFile,
@@ -236,8 +261,12 @@ def convert_adobe_to_parsed_document(
             if chunk:
                 chunks.append(chunk)
         elif element.Text is not None and not (path[1].startswith("Table") or element.Bounds is None):
-            chunk = create_text_chunk(element, element_structure)
-            chunks.append(chunk)
+            element_chunks = split_element_chunk(element)
+            for element_chunk in element_chunks:
+                element_chunk_structure = get_structure(section_number, passage_number)
+                chunk = create_text_chunk(element_chunk, element_chunk_structure)
+                chunks.append(chunk)
+                passage_number += 1
 
     return ParsedDocument.validate_python(chunks)
 

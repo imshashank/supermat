@@ -41,14 +41,14 @@ from supermat.core.parser.adobe_parser.adobe_internal_model import (
     AdobeStructuredData,
     Element,
 )
-from supermat.core.parser.utils import get_keywords
+from supermat.core.parser.utils import get_keywords, split_text_into_token_chunks
 from supermat.core.utils import get_structure, split_structure
 
 load_dotenv(find_dotenv())
 
 PDF_SERVICES_CLIENT_ID = os.environ.get("PDF_SERVICES_CLIENT_ID")
 PDF_SERVICES_CLIENT_SECRET = os.environ.get("PDF_SERVICES_CLIENT_SECRET")
-MAX_PARAGRAPH_LEN = int(os.environ.get("MAX_PARAGRAPH_LEN", 8000))
+MAX_PARAGRAPH_LEN = int(os.environ.get("MAX_PARAGRAPH_LEN", 4000))
 MIN_SENTENCE_LEN = int(os.environ.get("MIN_SENTENCE_LEN", 2))
 
 CACHED_FILE = CachedFile()
@@ -191,23 +191,11 @@ def process_list_items(
 
 def split_element_chunk(element: Element) -> list[Element]:
     assert element.Text
-    if len(element.Text) < MAX_PARAGRAPH_LEN:
+
+    chunks = split_text_into_token_chunks(element.Text, max_tokens=MAX_PARAGRAPH_LEN)
+
+    if len(chunks) == 1:
         return [element]
-    chunks = []
-    current_chunk = []
-
-    for word in element.Text:
-        # Check if adding the next word would exceed the max_length
-        if sum(len(w) for w in current_chunk) + len(current_chunk) + len(word) > MAX_PARAGRAPH_LEN:
-            # Add current chunk to chunks and start a new one
-            chunks.append(" ".join(current_chunk))
-            current_chunk = [word]
-        else:
-            current_chunk.append(word)
-
-    # Add the last chunk if any words remain
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
 
     split_elements = [Element(**(element.model_dump(exclude={"Text"}) | {"Text": chunk})) for chunk in chunks]
     return split_elements

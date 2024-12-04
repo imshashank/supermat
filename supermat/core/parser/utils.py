@@ -2,12 +2,15 @@ import os
 
 import nltk
 import spacy
+import tiktoken
 from dotenv import find_dotenv, load_dotenv
+from langchain.text_splitter import TokenTextSplitter
 from nltk import word_tokenize
 from nltk.tag import pos_tag
 
 load_dotenv(find_dotenv())
 
+TOKENIZER_MODEL_NAME = os.getenv("TOKENIZER_MODEL_NAME", "gpt-3.5-turbo")
 SPACY_MODEL = os.environ.get("SPACY_MODEL", "en_core_web_sm")
 
 try:
@@ -64,3 +67,21 @@ def extract_meaningful_words(text: str) -> set[str]:
 
 def get_keywords(text: str) -> list[str]:
     return list(extract_spacy_keywords(text) | extract_meaningful_words(text))
+
+
+def split_text_into_token_chunks(text, max_tokens: int = 8000, model_name: str = TOKENIZER_MODEL_NAME) -> list[str]:
+    """
+    Splits a text into chunks based on token count using LangChain's token splitter.
+
+    Args:
+        text (str): The text to be split.
+        max_tokens (int): The maximum number of tokens in each chunk.
+        model_name (str): The LLM model name to determine tokenization rules.
+
+    Returns:
+        list: A list of text chunks, each with up to max_tokens tokens.
+    """
+    encoding = tiktoken.encoding_for_model(model_name)
+    splitter = TokenTextSplitter(encoding_name=encoding.name, chunk_size=max_tokens, chunk_overlap=0)
+    chunks = splitter.split_text(text)
+    return chunks

@@ -7619,4 +7619,4 @@ pymupdf = ["pymupdf"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "1e5fd777077aacd3e7056e414919de4a4370e44e75f4077cbd2da6c8a35c94ac"
+content-hash = "0a831ffa48841e47eab5f42f69ee64ab5a65330a9c4509c75581d5e9eeda8179"

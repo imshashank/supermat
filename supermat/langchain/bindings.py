@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import Any
 
-from langchain.schema.vectorstore import VectorStore
+from langchain.schema.vectorstore import VectorStore, VectorStoreRetriever
 from langchain_core.callbacks.manager import (
     AsyncCallbackManagerForRetrieverRun,
     CallbackManagerForRetrieverRun,
@@ -47,19 +47,21 @@ class SupermatRetriever(BaseRetriever):
     def vector_store_retriver(self) -> VectorStoreRetriever:
         return self.vector_store.as_retriever(**self.vector_store_retriver_kwargs)
 
-    def model_post_init(self, __context: Any) -> None:
+    def model_post_init(self, __context: Any):
         super().model_post_init(__context)
         # TODO (@legendof-selda): integrate the chunker class here instead.
         self.vector_store.add_documents(
             [
                 Document(
-                    sentence.text,
-                    metadata={"structure": sentence.structure, "id": f"{chunk.document}-{sentence.structure}"},
+                    chunk.text,
+                    metadata={
+                        "structure": chunk.structure,
+                        "id": f"{chunk.document}-{chunk.structure}",
+                        "key": ",".join(chunk.key),
+                    },
                 )
                 for chunk in self.parsed_docs
                 if isinstance(chunk, BaseTextChunk)
-                for sentence in (chunk.sentences if chunk.sentences else [chunk])
-                if isinstance(sentence, BaseTextChunk)
             ]
         )
 
@@ -93,10 +95,10 @@ class SupermatRetriever(BaseRetriever):
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> list[Document]:
         documents = self.vector_store_retriver._get_relevant_documents(query, run_manager=run_manager)
-        return self._get_higher_section(documents)
+        return documents
 
     async def _aget_relevant_documents(
         self, query: str, *, run_manager: AsyncCallbackManagerForRetrieverRun
     ) -> list[Document]:
         documents = await self.vector_store_retriver._aget_relevant_documents(query, run_manager=run_manager)
-        return self._get_higher_section(documents)
+        return documents

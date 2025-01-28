@@ -136,13 +136,22 @@ class BaseChunk(CustomBaseModel):
     document: str | None = None
 
     @overload
-    def is_subsection(self, sub_section: BaseChunk) -> bool: ...  # noqa: U100, E704
+    def has_subsection(self, sub_section: BaseChunk) -> bool: ...  # noqa: U100, E704
 
     @overload
-    def is_subsection(self, sub_section: str) -> bool: ...  # noqa: U100, E704
+    def has_subsection(self, sub_section: str) -> bool: ...  # noqa: U100, E704
 
-    def is_subsection(self, sub_section: BaseChunk | str) -> bool:
+    def has_subsection(self, sub_section: BaseChunk | str) -> bool:
         return is_subsection(sub_section if isinstance(sub_section, str) else sub_section.structure, self.structure)
+
+    @overload
+    def is_subsection(self, section: BaseChunk) -> bool: ...  # noqa: U100, E704
+
+    @overload
+    def is_subsection(self, section: str) -> bool: ...  # noqa: U100, E704
+
+    def is_subsection(self, section: BaseChunk | str) -> bool:
+        return is_subsection(self.structure, section if isinstance(section, str) else section.structure)
 
 
 class BaseTextChunk(BaseChunk):

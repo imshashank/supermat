@@ -85,10 +85,12 @@ class SupermatRetriever(BaseRetriever):
                     id=f"{chunk.document}-{chunk.structure}",
                 ),
             )
+            # This is in paragraph level.
             for chunk in self.parsed_docs
             if isinstance(chunk, BaseTextChunk)
             and any(
-                chunk.is_subsection(doc.metadata.get("structure", "")) and chunk.structure not in _seen_chunks
+                chunk.has_subsection(doc.metadata.get("structure", ""))
+                # In sentence level.
                 for doc in documents
             )
         ]

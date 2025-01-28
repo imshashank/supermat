@@ -35,6 +35,7 @@ def orjson_defaults(obj):
     raise TypeError
 
 
+# TODO (@legendof-selda): Instead of file path, use file content hash to cache.
 class CachedFile:
     _instance: Self | None = None
     _lock = threading.Lock()

@@ -138,12 +138,16 @@ class SupermatRetriever(BaseRetriever):
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> list[Document]:
         documents = self.vector_store_retriver._get_relevant_documents(query, run_manager=run_manager)
+        if self.store_sentences:
+            documents = self._get_higher_section(documents)
         return documents
 
     async def _aget_relevant_documents(
         self, query: str, *, run_manager: AsyncCallbackManagerForRetrieverRun
     ) -> list[Document]:
         documents = await self.vector_store_retriver._aget_relevant_documents(query, run_manager=run_manager)
+        if self.store_sentences:
+            documents = self._get_higher_section(documents)
         return documents
 
 

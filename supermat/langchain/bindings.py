@@ -186,12 +186,12 @@ class ChainOutput(TypedDict):
     context: list[Document]
 
 
-def post_process(chain_output: ChainOutput, substitute: bool = True) -> str:
+def post_process(chain_output: ChainOutput, substitute: bool = False) -> str:
     """LLM chain link to replace references with content using regex matching.
 
     Args:
         chain_output (ChainOutput): Output of previous Lanchain link.
-        substitute (bool, optional): Substitute the reference matched directly. Defaults to True.
+        substitute (bool, optional): Substitute the reference matched directly. Defaults to False.
             If, substitute is False, in a new paragraph, the referenced chunk is dumped directly.
 
     Returns:
@@ -237,7 +237,7 @@ def post_process(chain_output: ChainOutput, substitute: bool = True) -> str:
 def get_default_chain(
     retriever: SupermatRetriever,
     llm_model: BaseChatModel | BaseLLM,
-    substitute_references: bool = True,
+    substitute_references: bool = False,
     return_context: bool = False,
 ) -> RunnableSerializable:
     """Default chain that implements citation where LLM returns the referenced id as well
@@ -248,7 +248,7 @@ def get_default_chain(
         retriever (SupermatRetriever): SupermatRetriever that retrieves the relevant document chunks for LLM context.
         llm_model (BaseChatModel | BaseLLM): The LLM model used for inference
         substitute_references (bool, optional): Whether to replace the citations direction, or as a separate section.
-            Defaults to True.
+            Defaults to False.
         return_context (bool, optional): Return retrived documents for debugging. Defaults to False.
 
     Returns:

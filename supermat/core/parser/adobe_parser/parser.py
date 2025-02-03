@@ -36,7 +36,7 @@ from supermat.core.models.parsed_document import (
     TextChunk,
     TextChunkProperty,
 )
-from supermat.core.parser.adobe_parser._utils import CachedFile
+from supermat.core.parser.adobe_parser._adobe_doc_cacher import CachedFile
 from supermat.core.parser.adobe_parser.adobe_internal_model import (
     AdobeStructuredData,
     Element,

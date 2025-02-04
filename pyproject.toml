@@ -139,7 +139,7 @@ fastapi = { version = "^0.115.5", extras = ["standard"] }
 
 
 [tool.poetry.group.frontend.dependencies]
-streamlit = "^1.40.1"
+gradio = "^5.14.0"
 
 [build-system]
 requires = ["poetry-core"]

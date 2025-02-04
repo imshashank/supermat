@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from functools import cached_property, partial
 from operator import itemgetter
 from pprint import pformat
@@ -71,16 +72,55 @@ class SupermatRetriever(BaseRetriever):
     def vector_store_retriver(self) -> VectorStoreRetriever:
         return self.vector_store.as_retriever(**self.vector_store_retriver_kwargs)
 
+    def _create_document_index(self) -> tuple[dict[str, int], dict[int, str]]:
+        documents = {
+            chunk.document
+            for chunk in self.parsed_docs
+            # NOTE: we assume that all chunks have document
+            if chunk.document is not None
+        }
+        # NOTE: we want the document id to start with 1, since 0 means all in structure id.
+        document_index_map = {document: doc_id for doc_id, document in enumerate(documents, 1)}
+        index_document_map = dict(zip(document_index_map.values(), document_index_map.keys()))
+        return document_index_map, index_document_map
+
+    def _add_doc_id(self, document_index_map: dict[str, int]):
+        """
+        Mutates current `parsed_docs` to include document id in the chunk structure id.
+        This is a temporary solution.
+        Currently, the parsed documents do not include document as part of the strucutre id.
+        We include document id in the relevant retrieved documents for now.
+        TODO (@legendof-selda): Include document id as part of structure id in `ParsedDocumentType`.
+
+        Args:
+            document_index_map (dict[str, int]): 'document' name to index mapping.
+
+        """
+        for chunk in self.parsed_docs:
+            assert chunk.document
+            doc_index = document_index_map[chunk.document]
+            chunk.structure = f"{doc_index}.{chunk.structure}"
+
+        return self.parsed_docs
+
     def model_post_init(self, __context: Any):
         super().model_post_init(__context)
         # TODO (@legendof-selda): integrate the chunker class here instead.
         # TODO (@legendof-selda): Build reverse lookups to get higher level sections easily from parsed_docs.
+        self._document_index_map, self._index_document_map = self._create_document_index()
+        self._add_doc_id(self._document_index_map)
         # NOTE: Currently paragraph chunks seemed to work best instead of sentence.
         self.vector_store.add_documents(
             [
                 Document(
                     sentence.text,
-                    metadata={"structure": sentence.structure, "id": f"{chunk.document}-{sentence.structure}"},
+                    metadata=dict(
+                        document=chunk.document,
+                        structure=sentence.structure,
+                        # properties=chunk.properties,
+                        key=",".join(sentence.key),
+                        citation_id=sentence.structure,
+                    ),
                 )
                 for chunk in self.parsed_docs
                 if isinstance(chunk, BaseTextChunk)
@@ -91,11 +131,13 @@ class SupermatRetriever(BaseRetriever):
             else [
                 Document(
                     chunk.text,
-                    metadata={
-                        "structure": chunk.structure,
-                        "id": f"{chunk.document}-{chunk.structure}",
-                        "key": ",".join(chunk.key),
-                    },
+                    metadata=dict(
+                        document=chunk.document,
+                        structure=chunk.structure,
+                        # properties=chunk.properties,
+                        key=",".join(chunk.key),
+                        citation_id=chunk.structure,
+                    ),
                 )
                 for chunk in self.parsed_docs
                 if isinstance(chunk, BaseTextChunk)
@@ -120,10 +162,10 @@ class SupermatRetriever(BaseRetriever):
                 # ideally the intelligent chunker class will take care of this based on token length.
                 chunk.text[: self.max_chunk_length],
                 metadata=dict(
-                    structure=chunk.structure,
+                    document=chunk.document,
                     # properties=chunk.properties,
-                    key=chunk.key,
-                    id=f"{chunk.document}-{chunk.structure}",
+                    key=",".join(chunk.key),
+                    citation_id=chunk.structure,
                 ),
             )
             # This is in paragraph level.
@@ -151,26 +193,36 @@ class SupermatRetriever(BaseRetriever):
         return documents
 
 
-REFERENCE_PATTERN = "<ref={id}/>"
-
-
 def format_docs(docs: list[Document]) -> str:
-    response = [f"{{'text':{doc.page_content}, 'metadata': {json.dumps(doc.metadata)}}}" for doc in docs]
-    return str(response)
+    response = ["{{" f"'text':'{doc.page_content}', 'metadata': '{json.dumps(doc.metadata)}', " "}}" for doc in docs]
+    return f"[{','.join(response)}]"
+
+
+def pre_format_docs(docs: list[Document]) -> list[Document]:
+    return [
+        Document(page_content=doc.page_content, metadata=(doc.metadata | {"citation_id": doc.metadata["citation_id"]}))
+        for doc in docs
+    ]
 
 
 def get_default_prompt() -> ChatPromptTemplate:
-    ref = REFERENCE_PATTERN.format(id="id")
     system_prompt = (
-        "Use the given context to answer the question. "
+        "From the given list of documents used as context, choose the right documents for the given question. "
+        "Answer only from the context provided and cite them as well using the given `citation_id`. "
+        "This is how you should cite the text directly but using this cite block `<cite ref='citation_id'/>`."
+        "Quote directly from context by specifying the `citation_id` inside the cite block to quote directly instead "
+        "of writing it again. "
+        "Here is the context in backticks: ```\n{context}\n```\n"
         "If you don't know the answer, say you don't know. "
-        "Use three sentence maximum and keep the answer concise. "
-        "Directly quote from the context given by returning the document reference "
-        f"(in this format `{ref}`) found in metadata when required. "
-        f"No need to quote it verbatim, just provide the reference like this format `{ref}`. "
-        f"You must use the exact reference format {ref} when referring to documents "
-        f"and must work with this regex pattern {REFERENCE_PATTERN.format(id=r'(.*?)')}.\n"
-        "Context: {context}"
+        "Only answer from the context. "
+        "Use three sentence maximum and keep the answer concise, but make sure the cite block is used when answering. "
+        "Answer the following question, using the cite block `<cite />` instead of answering directly. "
+        "```\n{question}\n```"
+        "Remeber to use the cite block like this "
+        "`<cite ref='citation_id' />` when thinking."
+        "Example: If the answer is in a document with `citation_id='5.2.3.0'`, "
+        "you must a cite block like this `<cite ref='5.2.3.0' />`. "
+        "Think through how to use the `<cite />` block like shown above. "
     )
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -178,11 +230,42 @@ def get_default_prompt() -> ChatPromptTemplate:
             ("human", "{question}"),
         ]
     )
+    prompt = ChatPromptTemplate.from_template(system_prompt)
     return prompt
 
 
-def format_ref(doc_id: str) -> str:
-    return REFERENCE_PATTERN.format(id=doc_id)
+@dataclass(eq=True, frozen=True)
+class ParsedCite:
+    ref: str
+    cite_block: str
+    start: int = 0
+    end: int | None = None
+
+
+def parse_cite_blocks(text: str) -> tuple[ParsedCite]:
+    """Parses the `<cite ref='citation_id', start=0, end=None />` cite block in a text.
+    NOTE: Could not get the LLM to return start and end via prompt templating.\
+    This is a demo to show that citations are possible, and thus reduces output tokens from llm.
+    With citations, we can avoid llm's returning tokens which are already available in context.
+
+    Args:
+        text (str): Text containing the cite block
+
+    Returns:
+        tuple[ParsedCite]: Parsed citations found in text.
+    """
+    pattern = r"(<cite ref='([^']*)'(,?\s*start=(\d+))?(,?\s*end=(\d+))?\s*/>)"
+    matches = re.findall(pattern, text)
+    parsed_blocks = set()
+    for match in matches:
+        block = {"cite_block": match[0], "ref": match[1]}
+        if match[3]:
+            block["start"] = int(match[3])
+        if match[5]:
+            block["end"] = int(match[5])
+        parsed_blocks.add(ParsedCite(**block))
+
+    return tuple(parsed_blocks)
 
 
 class ChainOutput(TypedDict):
@@ -202,34 +285,36 @@ def post_process(chain_output: ChainOutput, substitute: bool = False) -> str:
         str: Returns model output with reference ids parsed to actual content.
     """
     output = chain_output["llm_output"]
-    doc_mapping = {doc.metadata["id"]: doc for doc in chain_output["context"]}
+    doc_mapping = {doc.metadata["citation_id"]: doc for doc in chain_output["context"]}
 
-    pattern = REFERENCE_PATTERN.format(id=r"(.*?)")  # r'<ref=(.*?)/>'
+    references_used = parse_cite_blocks(output)
+    total_references = len(references_used)
+
+    def get_reference_quote(parsed_cite: ParsedCite) -> str | None:
+        if parsed_cite.ref not in doc_mapping:
+            return None
+        reference = doc_mapping[parsed_cite.ref]
+        return reference.page_content[parsed_cite.start : parsed_cite.end]
 
     if substitute:
-
-        def replace_match(match):
-            doc_id = match.group(1)
-            doc = doc_mapping.get(doc_id, None)
-            return doc.page_content if doc else f"<invalid_ref# {doc_id}/>"
-
-        # Replace all references in a single pass
-        processed_output = re.sub(pattern, replace_match, output)
+        processed_output = output
+        for parsed_cite in references_used:
+            reference = (
+                ref if (ref := get_reference_quote(parsed_cite)) else f"<invalid_ref# {parsed_cite.cite_block}/>"
+            )
+            processed_output = processed_output.replace(parsed_cite.cite_block, reference, 1)
     else:
-        # there can be duplicate references, so take unique set.
-        references_used = tuple(set(re.findall(pattern, output)))
-        total_references = len(references_used)
 
-        def get_reference(reference_id: str) -> str:
+        def get_reference(parsed_cite: ParsedCite) -> str:
             return (
-                pformat(reference.model_dump())
-                if (reference := doc_mapping.get(reference_id, None))
-                else f"[Reference not found: {reference_id}]"
+                ref + "\n" + pformat(doc_mapping[parsed_cite.ref].model_dump())
+                if (ref := get_reference_quote(parsed_cite))
+                else f"[Reference not found: {parsed_cite.cite_block}]"
             )
 
         references = [
-            f"{i:0{total_references}}. {format_ref(reference_id)}:\n\t{get_reference(reference_id)}\n"
-            for i, reference_id in enumerate(references_used, 1)
+            f"{i:0{total_references}}. {parsed_cite.cite_block}:\n\t{get_reference(parsed_cite)}\n"
+            for i, parsed_cite in enumerate(references_used, 1)
         ]
         references_section = "\n\nReferences:\n" + ("\n".join(references))
 
@@ -258,14 +343,8 @@ def get_default_chain(
     Returns:
         RunnableSerializable: Langchain chain to run prompt query.
     """
-    chain = (
-        RunnableParallel({"context": retriever | format_docs, "question": RunnablePassthrough()})
-        | get_default_prompt()
-        | llm_model
-        | StrOutputParser()
-    )
     prompt = get_default_prompt()
-    chain = RunnableParallel({"context": retriever, "question": RunnablePassthrough()}) | {
+    chain = RunnableParallel({"context": retriever | pre_format_docs, "question": RunnablePassthrough()}) | {
         "llm_output": prompt.partial(context=itemgetter("context") | RunnableLambda(format_docs))
         | llm_model
         | StrOutputParser(),
@@ -273,7 +352,12 @@ def get_default_chain(
     }
     _post_process = RunnableLambda(partial(post_process, substitute=substitute_references))
     if return_context:
-        chain |= {"answer": _post_process, "context": itemgetter("context")}
+        chain |= {
+            "llm_output": itemgetter("llm_output"),
+            "answer": _post_process,
+            "context": itemgetter("context"),
+            "formatted_context": (itemgetter("context") | RunnableLambda(format_docs)),
+        }
     else:
         chain |= _post_process
 

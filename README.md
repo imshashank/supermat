@@ -17,6 +17,7 @@ We chose to work with the [CUAD](https://www.atticusprojectai.org/cuad) dataset,
 ## Evaluation
 
 We evaluated our approach against two benchmarks:
+
 1. A baseline standard chunking strategy
 2. LangChain's current state-of-the-art [SemanticChunker](https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html) with `breakpoint_threshold_type="percentile"`
 

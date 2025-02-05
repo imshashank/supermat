@@ -14,7 +14,7 @@ from langchain_core.callbacks.manager import (
     CallbackManagerForRetrieverRun,
 )
 from langchain_core.documents import Document
-from langchain_core.language_models import BaseChatModel, BaseLLM
+from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
@@ -325,7 +325,7 @@ def post_process(chain_output: ChainOutput, substitute: bool = False) -> str:
 
 def get_default_chain(
     retriever: SupermatRetriever,
-    llm_model: BaseChatModel | BaseLLM,
+    llm_model: BaseLanguageModel,
     substitute_references: bool = False,
     return_context: bool = False,
 ) -> RunnableSerializable:

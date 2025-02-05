@@ -2,27 +2,26 @@
 
 ## Preface
 
-Supermat is a new way of thinking retrieval for AI. Language consists of semantic hierarchical structures to express ideas and information.
+Supermat introduces a new approach to AI retrieval by focusing on language's inherent hierarchical semantic structures. Language is more than just a collection of tokens and words – it relies on structure to express human thought. All text contains natural hierarchies: documents, sections, paragraphs, sentences, and words. While words matter, the structure organizing these elements plays a crucial role in human comprehension.
 
-Writing isn't just about tokens/words, but on structure as well to express human thought. Documents, sections, paragraphs, sentences and words are the inherent structure that we find in all text. Just focusing on words might not be the best way to express ourselves, organizing concepts in the right structure can make it easier for humans to comprehend.
-What makes a great text book? It isn't the words that it uses but how it organizes the different concepts in a certain order of sections and paragraphs that optimizes a person's understanding the best possible way.
+Consider what makes a great textbook. Its effectiveness often lies not in the specific words used, but in how it organizes concepts across sections and paragraphs to optimize understanding. This structural organization is fundamental to how we learn and process information.
 
-These inherent structures in language help shape content and is one of the best ways to express ideas, then why do we throw it away while building language models. That is the question which we seek.
+If these inherent language structures are so vital for expressing ideas, why do we discard them when building language models? This is the central question driving our research.
 
 ## Introduction
 
-This repository explores the idea of keeping the inherent structures in language available in Large Language Models. We specifically targetted RAG systems to showcase this idea and demonstrate how effective it can be as compared to basic chunking and SOTA proposals from langchain.
+This repository explores preserving language's inherent structures within Large Language Models. We focus specifically on Retrieval-Augmented Generation (RAG) systems to demonstrate this concept's effectiveness compared to basic chunking and state-of-the-art proposals from LangChain.
 
-Here, we specifically worked on the [CUAD](https://www.atticusprojectai.org/cuad) dataset, and QnA dataset in the legal domain, to demonstrate this idea. The legal domain is a great way to showcase this since they tend to be very precise and elaborate and is one of the most difficult domains for LLMs to work on due to it's large volume. Legal documents has a very strong structure in them, which is vital to keep when working with NLP based tasks.
+We chose to work with the [CUAD](https://www.atticusprojectai.org/cuad) dataset, a QnA dataset in the legal domain, to showcase our approach. The legal domain provides an excellent testing ground due to its precise and elaborate nature, making it one of the most challenging domains for LLMs due to document volume. Legal documents contain strong structural elements that are vital to preserve when performing NLP tasks.
 
 ## Evaluation
 
-We compared our approach with standard chunking strategy as a baseline and the current SOTA chunking strategy available in langchain called [SemanticChunker](https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html), with `breakpoint_threshold_type="percentile"`.
-
-In our evaluation exercise, we found the following results.
+We evaluated our approach against two benchmarks:
+1. A baseline standard chunking strategy
+2. LangChain's current state-of-the-art [SemanticChunker](https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html) with `breakpoint_threshold_type="percentile"`
 
 > TODO: after discussing with Rishi, will figure out the best way to display this.
 
 ## Conclusion
 
-From this, it is fair to say that there is a lot to be explored here. Our endevour has only begun. What we hope to gain here, is to show that focusing more on keeping the structure of language intact only rewards us more. Rather than going with the usual practices of chunking in most RAG systems, a new way of saving text as writing can lead to the next step. Instead of throwing away these structures for the reason of complexity, we would like to deep dive in and see more on how this can be saved.
+Our initial findings suggest significant untapped potential in this area. This research represents just the beginning of our exploration. We aim to demonstrate that preserving language structure in AI systems yields better results than traditional chunking methods used in RAG systems. Rather than discarding these structures due to complexity, we advocate for deeper investigation into how they can be preserved and leveraged effectively.

@@ -36,7 +36,9 @@ We evaluated our approach against two benchmarks:
 1. A baseline standard chunking strategy
 2. LangChain's current state-of-the-art [SemanticChunker](https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html) with `breakpoint_threshold_type="percentile"`
 
-> TODO: after discussing with Rishi, will figure out the best way to display this.
+In our internal evals, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
+
+> **Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%**
 
 ## Conclusion
 

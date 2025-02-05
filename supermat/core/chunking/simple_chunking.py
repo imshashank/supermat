@@ -12,8 +12,14 @@ if TYPE_CHECKING:
 
 
 class SimpleChunker(BaseChunker):
+    """
+    A simple chunking strategy that simply takes all TextChunks in the parsed document and converts them into chunks.
+    """
+
     @staticmethod
     def build_chunk(doc_id: int, section: ChunkModelType) -> ChunkDocument:
+        assert isinstance(section, BaseTextChunk)
+        assert section.properties
         return ChunkDocument(
             document_id=doc_id,
             text=section.text,

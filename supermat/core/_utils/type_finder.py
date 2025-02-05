@@ -6,7 +6,7 @@ from typing import Any
 import orjson
 
 
-def find_key_values(data: Any, target_key: str, key_values: dict[str, set] = None) -> dict[str, set]:
+def find_key_values(data: Any, target_key: str, key_values: dict[str, set] | None = None) -> dict[str, set]:
     """
     Recursively search through nested JSON data to find all instances of a specific key and its values.
 

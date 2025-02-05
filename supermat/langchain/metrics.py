@@ -12,6 +12,8 @@ from rouge_score import rouge_scorer
 
 
 class FaithfullnessMetrics(RunEvaluator):
+    """Evaluates Faithfullness metric"""
+
     def __init__(self, llm: BaseChatModel) -> None:
         self.llm = llm
         self.evaluator_faithfullness = load_evaluator(
@@ -33,6 +35,8 @@ class FaithfullnessMetrics(RunEvaluator):
 
 
 class Accuracy(RunEvaluator):
+    """Evaluates Accuracy metric"""
+
     def __init__(self, llm: BaseChatModel) -> None:
         self.llm = llm
         self.evaluator_accuracy = load_evaluator(
@@ -60,6 +64,8 @@ class Accuracy(RunEvaluator):
 
 
 class CosineSimilarity(RunEvaluator):
+    """Evaluates cosine similarity metric"""
+
     def __init__(self) -> None:
         self.embedding_model = HuggingFaceEmbeddings(
             model_name="thenlper/gte-base",
@@ -83,6 +89,8 @@ class CosineSimilarity(RunEvaluator):
 
 
 class RougeLsum(RunEvaluator):
+    """Evaluates ROGUE-L F1 metric"""
+
     def __init__(self) -> None:
         # "ROUGE-Lsum splits the text into sentences based on newlines
         # and computes the LCS for each pair of sentences and take the average score for all sentences
@@ -106,6 +114,8 @@ class RougeLsum(RunEvaluator):
 
 
 class RougeLsumPrecision(RougeLsum):
+    """Evaluates ROGUE-L sum precision metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]
@@ -121,6 +131,8 @@ class RougeLsumPrecision(RougeLsum):
 
 
 class RougeLsumRecall(RougeLsum):
+    """Evaluates ROGUE-L sum Recall metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]
@@ -136,6 +148,8 @@ class RougeLsumRecall(RougeLsum):
 
 
 class Rouge1(RunEvaluator):
+    """Evaluates ROGUE1 F1 metric"""
+
     def __init__(self) -> None:
         # "ROUGE-Lsum splits the text into sentences based on newlines
         # and computes the LCS for each pair of sentences and take the average score for all sentences
@@ -158,6 +172,8 @@ class Rouge1(RunEvaluator):
 
 
 class Rouge1Precision(Rouge1):
+    """Evaluates ROGUE1 precision metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]
@@ -173,6 +189,8 @@ class Rouge1Precision(Rouge1):
 
 
 class Rouge1Recall(Rouge1):
+    """Evaluates ROGUE1 recall metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]
@@ -188,6 +206,8 @@ class Rouge1Recall(Rouge1):
 
 
 class Rouge2(RunEvaluator):
+    """Evaluates ROGUE2 F1 metric"""
+
     def __init__(self) -> None:
         # "ROUGE-Lsum splits the text into sentences based on newlines
         # and computes the LCS for each pair of sentences and take the average score for all sentences
@@ -209,6 +229,8 @@ class Rouge2(RunEvaluator):
 
 
 class Rouge2Precision(Rouge2):
+    """Evaluates ROGUE2 precision metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]
@@ -224,6 +246,8 @@ class Rouge2Precision(Rouge2):
 
 
 class Rouge2Recall(Rouge2):
+    """Evaluates ROGUE2 recall metric"""
+
     def evaluate_run(self, run: Run, example: Example | None = None) -> EvaluationResult | EvaluationResults:
         response = run.outputs["output"]
         reference = example.outputs["Answer"]

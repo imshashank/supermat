@@ -52,6 +52,7 @@ def nltk_pos_tag(tokens: list[str]) -> list[tuple[str, str]]:
 
 
 def extract_meaningful_words(text: str) -> set[str]:
+    """For given text, extract set of relevant keywords using nltk."""
     # Tokenize the sentence
     tokens = nltk_word_tokenize(text)
     # Perform POS tagging
@@ -66,6 +67,7 @@ def extract_meaningful_words(text: str) -> set[str]:
 
 
 def get_keywords(text: str) -> list[str]:
+    """For given text, retrieve relevant list of keywords using spacy and nltk."""
     return list(extract_spacy_keywords(text) | extract_meaningful_words(text))
 
 

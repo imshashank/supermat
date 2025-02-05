@@ -24,10 +24,19 @@ from supermat.core.utils import get_structure
 
 
 def get_path(*args: int) -> str:
+    """Create path from page number, block number and line number."""
     return "/".join(map(str, args))
 
 
 def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
+    """Converts a pdf, page and by page, and block by block using PyMuPDF.
+
+    Args:
+        parsed_pdf (PyMuPDFDocument): Pydantic model representation of pymupdf document.
+
+    Returns:
+        ParsedDocumentType: Parsed form of the pdf.
+    """
     chunks = []
     for page in parsed_pdf.pages:
         for block in page.blocks:
@@ -101,6 +110,8 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
 
 @FileProcessor.register(".pdf")
 class PyMuPDFParser(Parser):
+    """Parses a pdf file using PyMuPDF library."""
+
     def parse(self, file_path: Path) -> ParsedDocumentType:
         parsed_pdf = parse_pdf(file_path)
         return process_pymupdf(parsed_pdf)

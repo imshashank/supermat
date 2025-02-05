@@ -14,6 +14,21 @@ This repository explores preserving language's inherent structures within Large 
 
 We chose to work with the [CUAD](https://www.atticusprojectai.org/cuad) dataset, a QnA dataset in the legal domain, to showcase our approach. The legal domain provides an excellent testing ground due to its precise and elaborate nature, making it one of the most challenging domains for LLMs due to document volume. Legal documents contain strong structural elements that are vital to preserve when performing NLP tasks.
 
+## Citations
+
+Citations present one of the most significant challenges in NLP: when an LLM answers a question, how do we trace its source information? This challenge intersects with important AI ethics discussions about properly attributing and recognizing others' work.
+
+By preserving the inherent structure of documents, we propose a human and machine-readable citation system that addresses these concerns.
+
+### Structure ID
+
+The Structure ID is a unique referencing system that leverages language hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes text highlighting and attribution straightforward.
+
+The Strucutre ID, goes like this **`2.1.4.8`**. This points specifically to **Document Index number `2`**, the **`1`st section** in that document, then the **`4`th paragraph** in that section, and finally the **`8`th sentence** in that paragraph.
+This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.
+
+Through post-processing of LLM outputs, this structure enables direct retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.
+
 ## Evaluation
 
 We evaluated our approach against two benchmarks:

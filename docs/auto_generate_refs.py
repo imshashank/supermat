@@ -42,7 +42,9 @@ for path in sorted(Path(pkg).rglob("*.py")):
 
 with mkdocs_gen_files.open("index.md", "w", encoding="utf-8") as fp:
     with Path("README.md").open("r", encoding="utf-8") as source:
-        fp.writelines(source.readlines())
+        readme_text = source.read()
+        readme_text = readme_text.replace("docs/assets/", "assets/")
+        fp.write(readme_text)
 
 if Path("LICENSE.txt").exists():
     with mkdocs_gen_files.open("LICENSE.md", "w", encoding="utf-8") as fp:

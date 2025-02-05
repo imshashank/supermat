@@ -1,11 +1,25 @@
+import random
+import re
+import traceback
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from itertools import chain
+from pathlib import Path
+from typing import TYPE_CHECKING, Sequence, cast
 
 import gradio as gr
+from joblib import Parallel, delayed
+from langchain_chroma import Chroma
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.runnables import RunnableSerializable
+from langchain_huggingface import HuggingFaceEmbeddings
+
+from supermat.core.parser.file_processor import FileProcessor
+from supermat.langchain.bindings import SupermatRetriever, get_default_chain
 
 if TYPE_CHECKING:
     from pydantic import SecretStr
+
+    from supermat.core.models.parsed_document import ParsedDocumentType
 
 
 class LLMProvider(StrEnum):
@@ -17,8 +31,7 @@ class LLMProvider(StrEnum):
 class LLMChat:
     def __init__(self):
         self.chat_model = None
-        self.provider = None
-        self.model = None
+        self.retriever = None
 
     def initialize_client(
         self,
@@ -60,6 +73,42 @@ class LLMChat:
         except Exception as e:
             return f"Error initializing client: {str(e)}"
 
+    def parse_files(self, collection_name: str, pdf_files: Sequence[Path | str]) -> str:
+        pdf_files = list(map(Path, pdf_files))
+        if TYPE_CHECKING:
+            pdf_files = cast(list[Path], pdf_files)
+
+        if not all(f.exists() for f in pdf_files):
+            return "Few files do not exist."
+        non_pdf_files = [f.name for f in pdf_files if f.suffix.lower() != ".pdf"]
+        if non_pdf_files:
+            return f"Following files are not pdf: \n{'\n'.join(non_pdf_files)}"
+
+        parsed_files = Parallel(n_jobs=-1, backend="threading")(
+            delayed(FileProcessor.parse_file)(path) for path in pdf_files
+        )
+
+        if TYPE_CHECKING:
+            parsed_files = cast(list[ParsedDocumentType], parsed_files)
+
+        documents = list(chain.from_iterable(parsed_docs for parsed_docs in parsed_files))
+
+        if TYPE_CHECKING:
+            documents = cast(ParsedDocumentType, documents)
+
+        retriever = SupermatRetriever(
+            parsed_docs=documents,
+            vector_store=Chroma(
+                embedding_function=HuggingFaceEmbeddings(
+                    model_name="thenlper/gte-base",
+                ),
+                persist_directory="./chromadb",
+                collection_name=collection_name,
+            ),
+        )
+        self.retriever = retriever
+        return "Files parsed successfully."
+
     def convert_history_to_messages(self, history: list[dict]) -> list[HumanMessage | AIMessage]:
         """Convert Gradio chat history to LangChain message format."""
 
@@ -68,19 +117,28 @@ class LLMChat:
             for msg in history
         ]
 
-    def chat(self, message: str, history):
+    @property
+    def chain(self) -> RunnableSerializable:
+        assert self.chat_model and self.retriever
+        chain = get_default_chain(self.retriever, self.chat_model, substitute_references=False, return_context=False)
+        return chain
+
+    def chat(self, message: str, _history):
         """Process chat message using LangChain chat model."""
         if not self.chat_model:
             return "Please initialize an LLM provider first!"
 
+        if not self.retriever:
+            return "Please parse relevant pdf documents!"
+
         try:
-            history_langchain_format = self.convert_history_to_messages(history)
-            history_langchain_format.append(HumanMessage(content=message))
-            gpt_response = self.chat_model.invoke(history_langchain_format)
+            # history_langchain_format = self.convert_history_to_messages(history)
+            # history_langchain_format.append(HumanMessage(content=message))
+            gpt_response = self.chain.invoke(message)
             return gpt_response if isinstance(gpt_response, str) else gpt_response.content
 
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error: {str(e)}\n{traceback.format_exc()}"
 
 
 def create_llm_interface():
@@ -135,11 +193,37 @@ def create_llm_interface():
 
                         initialize_btn.click(fn=initialize_client, inputs=llm_init_inputs, outputs=init_status)
 
+            with gr.Row():
+                with gr.Column():
+                    pdf_files = gr.Files(
+                        label="PDF Files to parse",
+                    )
+                with gr.Column():
+                    collection_id = gr.State(random.randint(1, 100))
+                    collection_name = gr.Textbox(f"TEST{collection_id.value}", label="Collection Name")
+                    upload_btn = gr.Button("Parse PDF files.")
+                with gr.Column():
+                    upload_status = gr.Textbox(label="Upload Status")
+
+                upload_btn.click(fn=llm_chat.parse_files, inputs=[collection_name, pdf_files], outputs=upload_status)
+
         with gr.Tab("Chat"):
 
             def respond(message, chat_history):
+                if isinstance(message, dict):
+                    message = message["text"]
                 bot_message = llm_chat.chat(message, chat_history)
-                return bot_message
+                think_match = re.search(r"<think>[\s\S]*?</think>", bot_message)
+                if think_match:
+                    think_block = think_match.group(0)
+                    bot_message = bot_message.replace(think_block, "")
+                    return [
+                        gr.ChatMessage(
+                            content=f"```\n{think_block}\n```", role="assistant", metadata={"title": "🧠 Thinking"}
+                        ),
+                        gr.ChatMessage(content=bot_message, role="assistant"),
+                    ]
+                return gr.ChatMessage(content=bot_message, role="assistant")
 
             gr.ChatInterface(respond, type="messages")
 

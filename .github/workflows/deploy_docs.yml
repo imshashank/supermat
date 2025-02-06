@@ -39,5 +39,4 @@ jobs:
           poetry install --only docs
       - name: Deploy to GitHub Pages
         run: |
-          source .venv/bin/activate
           mkdocs gh-deploy --force

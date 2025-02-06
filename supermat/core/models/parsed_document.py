@@ -49,6 +49,11 @@ class ValidationWarning(UserWarning):
 
 
 class CustomBaseModel(BaseModel):
+    """
+    BaseModel with some extra tweaks.
+    Needed this to handle previous output of parsed documents which has optional keys and needed to be saved for tests.
+    """
+
     model_config = ConfigDict(populate_by_name=True, json_schema_extra={"by_alias": True}, extra="forbid")
     _original_alias: dict[str, str] = PrivateAttr()
     _unexisted_keys: set[str] = PrivateAttr()
@@ -80,6 +85,7 @@ class CustomBaseModel(BaseModel):
 
     @model_serializer(mode="wrap")
     def serialize_model(self, nxt: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        """This custom serializer ensures that extra keys are included as well."""
         serialized = nxt(self)
         aliased_values = {
             renamed_field_name: serialized.pop(field_name)
@@ -97,6 +103,8 @@ class CustomBaseModel(BaseModel):
 
 
 class BaseChunkProperty(CustomBaseModel):
+    """Properties assosciated with a chunk. Close to adobe's format."""
+
     object_id: int | None = Field(default=None, validation_alias=AliasChoices("ObjectID", "ObjectId"))
     bounds: tuple[float | int, float | int, float | int, float | int] = Field(validation_alias="Bounds")
     page: int = Field(validation_alias="Page")
@@ -105,6 +113,8 @@ class BaseChunkProperty(CustomBaseModel):
 
 
 class FontProperties(CustomBaseModel):
+    """Font properties in a TextChunkProperty."""
+
     model_config = ConfigDict(extra="allow")
     alt_family_name: str | None = None
     embedded: bool | None = None
@@ -119,6 +129,8 @@ class FontProperties(CustomBaseModel):
 
 
 class TextChunkProperty(BaseChunkProperty):
+    """Properties assosciated to a TextChunk"""
+
     font: FontProperties = Field(validation_alias="Font")
     hasclip: bool | None = Field(default=None, validation_alias="HasClip")
     lang: str | None = Field(default=None, validation_alias="Lang")
@@ -131,6 +143,8 @@ ChunkModelForwardRefType: TypeAlias = Annotated[
 
 
 class BaseChunk(CustomBaseModel):
+    """BaseChunk that contains the type and structure of the chunk."""
+
     type_: Literal["Text", "Image", "Footnote"] = Field(alias="type", frozen=True)
     structure: str
     document: str | None = None
@@ -155,6 +169,8 @@ class BaseChunk(CustomBaseModel):
 
 
 class BaseTextChunk(BaseChunk):
+    """Common TextChunk model."""
+
     text: str
     key: list[str]
     properties: BaseChunkProperty | None = None
@@ -162,6 +178,8 @@ class BaseTextChunk(BaseChunk):
 
 
 class TextChunk(BaseTextChunk):
+    """TextChunk which was similar to the initial version of supermat."""
+
     type_: Literal["Text"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         default="Text", alias="type", frozen=True
     )
@@ -172,6 +190,8 @@ class TextChunk(BaseTextChunk):
 
 
 class ImageChunk(BaseChunk, BaseChunkProperty):
+    """ImageChunk that stores the image in Base64 encoding."""
+
     type_: Literal["Image"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         default="Image", alias="type", frozen=True
     )
@@ -190,6 +210,8 @@ class ImageChunk(BaseChunk, BaseChunkProperty):
 
 
 class FootnoteChunk(TextChunk):
+    """TextChunk which is a Footnote"""
+
     type_: Literal["Footnote"] = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         default="Footnote", alias="type", frozen=True
     )
@@ -202,6 +224,14 @@ ParsedDocument = TypeAdapter(ParsedDocumentType)
 
 
 def load_parsed_document(path: Path | str) -> ParsedDocumentType:
+    """Load a json dumped `ParsedDocument`
+
+    Args:
+        path (Path | str): file path to the json file.
+
+    Returns:
+        ParsedDocumentType: ParsedDocument model loaded from json.
+    """
     path = Path(path)
     with path.open("rb") as fp:
         raw_doc: list[dict[str, Any]] | dict[str, list[dict[str, Any]]] = orjson.loads(fp.read())
@@ -217,6 +247,12 @@ def load_parsed_document(path: Path | str) -> ParsedDocumentType:
 
 
 def export_parsed_document(document: ParsedDocumentType, output_path: Path | str, **kwargs):
+    """Export given ParsedDocument to a json file
+
+    Args:
+        document (ParsedDocumentType): The ParsedDocument to be dumped.
+        output_path (Path | str): JSON file location.
+    """
     output_path = Path(output_path)
     with output_path.open("wb+") as fp:
         fp.write(ParsedDocument.dump_json(document, **kwargs))

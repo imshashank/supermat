@@ -1,3 +1,7 @@
+"""
+Pydantic model for parsed document chunking stategies.
+"""
+
 from __future__ import annotations
 
 from functools import cached_property

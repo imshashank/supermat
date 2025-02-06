@@ -1,3 +1,9 @@
+"""
+Parsing pdf files using
+[Adobe PDF Services](https://developer.adobe.com/document-services/docs/overview/pdf-services-api/)
+We have a pydantic model that best represents the processed json file from adobe which makes it easier to parse.
+"""
+
 from pathlib import Path
 
 from supermat.core.models.parsed_document import ParsedDocumentType

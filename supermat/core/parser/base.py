@@ -1,3 +1,10 @@
+"""
+Base abstractions of Parser and Converters.
+`Parser` parses a given document type into a `ParsedDocumentType`.
+`Converter` converts a given document from one format to another so that it can be compatible with an existing `Parser`.
+Example: We have a `Parser` that parses a .pdf document, we can have `Converter`s that convert docx, pptx into pdf.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

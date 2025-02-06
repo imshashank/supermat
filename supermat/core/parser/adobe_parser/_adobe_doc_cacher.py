@@ -1,3 +1,7 @@
+"""
+Since adobe is a paid service, we cache all the outputs of a given pdf file that adobe provides to avoid calling the api
+"""
+
 import os
 import shutil
 import tempfile
@@ -37,6 +41,11 @@ def orjson_defaults(obj):
 
 # TODO (@legendof-selda): Instead of file path, use file content hash to cache.
 class CachedFile:
+    """
+    A singleton Cache mechanism that caches a given pdf file.
+    The cached index contains the mapping of the original pdf file path to the processed adobe zip file.
+    """
+
     _instance: Self | None = None
     _lock = threading.Lock()
     _cache_dir: Path | None = None

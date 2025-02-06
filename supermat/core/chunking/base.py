@@ -9,6 +9,18 @@ if TYPE_CHECKING:
 
 
 class BaseChunker(ABC):
+    """
+    Base class for all Chunker implementations.
+    """
+
     @abstractmethod
-    def create_chunks(self, procssed_document: ParsedDocumentType) -> DocumentChunksType:  # noqa: U100
-        ...
+    def create_chunks(self, processed_document: ParsedDocumentType) -> DocumentChunksType:  # noqa: U100
+        """Build chunks from the given ParsedDocument into list of ChunkDocuments.
+        This is the public class that is called for any chunking strategy.
+
+        Args:
+            processed_document (ParsedDocumentType): The processed document that needs to split into chunks.
+
+        Returns:
+            DocumentChunksType: The chunks built by the given strategy.
+        """

@@ -1,0 +1,7 @@
+desc,feedback.labeled_criteria:faithful,feedback.labeled_criteria:accuracy,feedback.cosine_similarity,feedback.rouge1_f1_score,feedback.rouge1_precision,feedback.rouge1_recall,feedback.rouge2_f1_score,feedback.rouge2_precision,feedback.rouge2_recall,feedback.rougeLsum_f1_score,feedback.rougeLsum_precision,feedback.rougeLsum_recall,execution_time
+mean,0.125303398,0.1556516,-0.007577361,0.206762253,0.126176781,0.333367306,0.007736952,-0.044857078,-0.077662244,0.228422607,0.151070712,0.343074096,-0.061831084
+min,0,0,0.004618728,,,,,,,,,,-0.193716338
+25%,0.555555556,0,-0.004991384,,,,,,,,,,0.033831474
+50%,0.125,0.25,-0.002752058,,,,,,,,,,-0.004200155
+75%,0,0,-0.011725222,0.230769231,0.236842105,0,,,,0.230769231,0.236842105,0,-0.084036712
+max,0,0,0,0,-0.066666667,0,0,-0.027122642,0,0,-0.075075075,0,-0.417665461

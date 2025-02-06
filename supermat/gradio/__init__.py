@@ -1,0 +1,230 @@
+import random
+import re
+import traceback
+from enum import StrEnum
+from itertools import chain
+from pathlib import Path
+from typing import TYPE_CHECKING, Sequence, cast
+
+import gradio as gr
+from joblib import Parallel, delayed
+from langchain_chroma import Chroma
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.runnables import RunnableSerializable
+from langchain_huggingface import HuggingFaceEmbeddings
+
+from supermat.core.parser.file_processor import FileProcessor
+from supermat.langchain.bindings import SupermatRetriever, get_default_chain
+
+if TYPE_CHECKING:
+    from pydantic import SecretStr
+
+    from supermat.core.models.parsed_document import ParsedDocumentType
+
+
+class LLMProvider(StrEnum):
+    ollama = "Ollama"
+    anthropic = "Anthropic"
+    openai = "OpenAI"
+
+
+class LLMChat:
+    def __init__(self):
+        self.chat_model = None
+        self.retriever = None
+
+    def initialize_client(
+        self,
+        provider: str,
+        model: str,
+        credentials: str | None = None,
+        base_url: str | None = None,
+        temperature: float | None = 0.0,
+    ) -> str:
+        """Initialize the LangChain chat model based on selected provider."""
+        self.provider = provider
+        self.model = model
+
+        if TYPE_CHECKING:
+            assert isinstance(credentials, SecretStr)
+
+        try:
+            match (provider):
+                case LLMProvider.ollama:
+                    from langchain_ollama.llms import OllamaLLM  # noqa: I900
+
+                    self.chat_model = OllamaLLM(model=model, temperature=temperature, base_url=base_url)
+                case LLMProvider.anthropic:
+                    from langchain_anthropic import ChatAnthropic  # noqa: I900
+
+                    self.chat_model = ChatAnthropic(
+                        model_name=model, temperature=temperature, timeout=None, api_key=credentials, stop=None
+                    )
+                case LLMProvider.openai:
+                    from langchain_openai import ChatOpenAI  # noqa: I900
+
+                    temperature = 0.7 if temperature is None else temperature
+                    self.chat_model = ChatOpenAI(model=model, temperature=temperature, api_key=credentials)
+                case _:
+                    return f"Invalid LLM Provider {provider}"
+
+            return f"{self.chat_model.get_name()} initialized successfully!"
+
+        except Exception as e:
+            return f"Error initializing client: {str(e)}"
+
+    def parse_files(self, collection_name: str, pdf_files: Sequence[Path | str]) -> str:
+        pdf_files = list(map(Path, pdf_files))
+        if TYPE_CHECKING:
+            pdf_files = cast(list[Path], pdf_files)
+
+        if not all(f.exists() for f in pdf_files):
+            return "Few files do not exist."
+        non_pdf_files = [f.name for f in pdf_files if f.suffix.lower() != ".pdf"]
+        if non_pdf_files:
+            return f"Following files are not pdf: \n{'\n'.join(non_pdf_files)}"
+
+        parsed_files = Parallel(n_jobs=-1, backend="threading")(
+            delayed(FileProcessor.parse_file)(path) for path in pdf_files
+        )
+
+        if TYPE_CHECKING:
+            parsed_files = cast(list[ParsedDocumentType], parsed_files)
+
+        documents = list(chain.from_iterable(parsed_docs for parsed_docs in parsed_files))
+
+        if TYPE_CHECKING:
+            documents = cast(ParsedDocumentType, documents)
+
+        retriever = SupermatRetriever(
+            parsed_docs=documents,
+            vector_store=Chroma(
+                embedding_function=HuggingFaceEmbeddings(
+                    model_name="thenlper/gte-base",
+                ),
+                persist_directory="./chromadb",
+                collection_name=collection_name,
+            ),
+        )
+        self.retriever = retriever
+        return "Files parsed successfully."
+
+    def convert_history_to_messages(self, history: list[dict]) -> list[HumanMessage | AIMessage]:
+        """Convert Gradio chat history to LangChain message format."""
+
+        return [
+            HumanMessage(content=msg["content"]) if msg["role"] == "user" else AIMessage(content=msg["content"])
+            for msg in history
+        ]
+
+    @property
+    def chain(self) -> RunnableSerializable:
+        assert self.chat_model and self.retriever
+        chain = get_default_chain(self.retriever, self.chat_model, substitute_references=False, return_context=False)
+        return chain
+
+    def chat(self, message: str, _history):
+        """Process chat message using LangChain chat model."""
+        if not self.chat_model:
+            return "Please initialize an LLM provider first!"
+
+        if not self.retriever:
+            return "Please parse relevant pdf documents!"
+
+        try:
+            # history_langchain_format = self.convert_history_to_messages(history)
+            # history_langchain_format.append(HumanMessage(content=message))
+            gpt_response = self.chain.invoke(message)
+            return gpt_response if isinstance(gpt_response, str) else gpt_response.content
+
+        except Exception as e:
+            return f"Error: {str(e)}\n{traceback.format_exc()}"
+
+
+def create_llm_interface():
+    llm_chat = LLMChat()
+
+    with gr.Blocks() as app:
+        with gr.Tab("Setup"):
+            with gr.Row():
+                provider_option = gr.Dropdown(
+                    choices=["--SELECT--"] + list(map(str, LLMProvider)), label="Select LLM Provider"
+                )
+
+            @gr.render(inputs=provider_option, triggers=[provider_option.change])
+            def provider_update(provider: str):
+                if provider == "--SELECT--":
+                    gr.Error("Select a provider from dropdown.", print_exception=False)
+                    return
+                with gr.Row():
+                    llm_init_inputs = []
+                    initialize_client = llm_chat.initialize_client
+                    with gr.Column():
+                        if provider == LLMProvider.ollama:
+                            base_url = gr.Textbox(
+                                value="http://localhost:11434",
+                                label="API Host",
+                                placeholder="e.g., http://localhost:11434 for Ollama",
+                            )
+                            model = gr.Textbox(
+                                value="deepseek-r1:8b", label="Model Name", placeholder="Model setup in Ollama"
+                            )
+                            llm_init_inputs = [provider_option, model, base_url]
+                            initialize_client = lambda p, m, b: llm_chat.initialize_client(  # noqa: E731
+                                provider=p,
+                                model=m,
+                                base_url=b,
+                            )
+                        else:
+                            credentials = gr.Textbox(
+                                label="API Key/Credentials", type="password", placeholder="Enter your API key here"
+                            )
+                            model = gr.Textbox(
+                                label=f"Select {provider} model",
+                            )
+                            llm_init_inputs = [provider_option, model, credentials]
+                            initialize_client = lambda p, m, c: llm_chat.initialize_client(  # noqa: E731
+                                provider=p, model=m, credentials=c
+                            )
+
+                    with gr.Column():
+                        initialize_btn = gr.Button("Initialize LLM")
+                        init_status = gr.Textbox(label="Initialization Status")
+
+                        initialize_btn.click(fn=initialize_client, inputs=llm_init_inputs, outputs=init_status)
+
+            with gr.Row():
+                with gr.Column():
+                    pdf_files = gr.Files(
+                        label="PDF Files to parse",
+                    )
+                with gr.Column():
+                    collection_id = gr.State(random.randint(1, 100))
+                    collection_name = gr.Textbox(f"TEST{collection_id.value}", label="Collection Name")
+                    upload_btn = gr.Button("Parse PDF files.")
+                with gr.Column():
+                    upload_status = gr.Textbox(label="Upload Status")
+
+                upload_btn.click(fn=llm_chat.parse_files, inputs=[collection_name, pdf_files], outputs=upload_status)
+
+        with gr.Tab("Chat"):
+
+            def respond(message, chat_history):
+                if isinstance(message, dict):
+                    message = message["text"]
+                bot_message = llm_chat.chat(message, chat_history)
+                think_match = re.search(r"<think>[\s\S]*?</think>", bot_message)
+                if think_match:
+                    think_block = think_match.group(0)
+                    bot_message = bot_message.replace(think_block, "")
+                    return [
+                        gr.ChatMessage(
+                            content=f"```\n{think_block}\n```", role="assistant", metadata={"title": "🧠 Thinking"}
+                        ),
+                        gr.ChatMessage(content=bot_message, role="assistant"),
+                    ]
+                return gr.ChatMessage(content=bot_message, role="assistant")
+
+            gr.ChatInterface(respond, type="messages")
+
+    return app

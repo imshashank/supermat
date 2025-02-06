@@ -1,0 +1,59 @@
+name: Unit Testing
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+      - synchronize
+  push:
+    branches:
+        - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+    POETRY_VERSION: "1.6.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Poetry
+        uses: Gr1N/setup-poetry@v9
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+      - name: Setup Poetry Dynamic Version
+        run: |
+          poetry self add "poetry-dynamic-versioning[plugin]"
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+      - uses: actions/cache@v4
+        with:
+          key: unit_tests-${{ hashFiles('**/poetry.lock') }}
+          path: ./.venv
+          restore-keys: |
+            unit_tests-
+        continue-on-error: true
+      - name: Install Python Pytest Dependencies
+        run: |
+          poetry install --with dev --all-extras
+      - name: Run Unit Tests
+        run: |
+          source .venv/bin/activate
+          pytest -n auto -v --html=unit_test_report.html --self-contained-html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit_test_report
+          path: unit_test_report.html

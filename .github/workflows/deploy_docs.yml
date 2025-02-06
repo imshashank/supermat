@@ -5,6 +5,8 @@ on:
       - main
   workflow_dispatch:
 
+env:
+    POETRY_VERSION: "1.6.0"
 permissions:
   contents: write
 jobs:
@@ -30,13 +32,14 @@ jobs:
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
       - uses: actions/cache@v4
         with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
+          key: unit_tests-${{ hashFiles('**/poetry.lock') }}
+          path: ./.venv
           restore-keys: |
-            mkdocs-material-
+            unit_tests-
+        continue-on-error: true
       - name: Install Python MkDocs Dependencies
         run: |
           poetry install --only docs
       - name: Deploy to GitHub Pages
         run: |
-          mkdocs gh-deploy --force
+          poetry run mkdocs gh-deploy --force

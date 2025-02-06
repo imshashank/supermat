@@ -27,6 +27,8 @@ theme:
 
 plugins:
   - search
+  - macros
+  - table-reader
   - autorefs
   - mkdocstrings
   - literate-nav:
@@ -37,7 +39,6 @@ plugins:
       fallback_to_empty: true
       exclude:
         - reference/
-  - table-reader
   - git-revision-date-localized:
       enable_creation_date: true
       type: date

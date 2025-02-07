@@ -316,22 +316,13 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#citations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Citations
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Citations">
+    <nav class="md-nav" aria-label="Introduction">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#structure-id" class="md-nav__link">
+  <a href="#structured-citations" class="md-nav__link">
     <span class="md-ellipsis">
-      Structure ID
+      Structured Citations
     </span>
   </a>
   
@@ -355,6 +346,15 @@
   <a href="#conclusion" class="md-nav__link">
     <span class="md-ellipsis">
       Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing
     </span>
   </a>
   
@@ -1409,22 +1409,13 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#citations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Citations
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Citations">
+    <nav class="md-nav" aria-label="Introduction">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#structure-id" class="md-nav__link">
+  <a href="#structured-citations" class="md-nav__link">
     <span class="md-ellipsis">
-      Structure ID
+      Structured Citations
     </span>
   </a>
   
@@ -1453,6 +1444,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1472,33 +1472,36 @@
 <h1 id="_1"><img alt="supermat" src="assets/supermat-logo-black-sub.png" title="supermat" /></h1>
 <h2 id="preface">Preface</h2>
 <p>Current retrieval systems face two fundamental limitations that we've accepted as normal. </p>
-<p>First, as they fragment information during processing, they lose natural relationships. While vector search is powerful for finding semantically related content, similarity isn't same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing that was clear and direct before processing. The result is increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. 
-Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  </p>
-<p>Our aprroach solves both these problems with a fundamental insight. 
-Information has natural structure - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. </p>
-<p>If these inherent language structures are so vital for expressing ideas, why do we discard them when building language models? </p>
+<p>First, as they fragment information during processing, they lose natural relationships. 
+While vector search is powerful for finding semantically related content, similarity isn't same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing that was clear and direct before processing. 
+The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. </p>
+<p>Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  </p>
+<p>Our aproach solves both these problems with a fundamental insight. 
+Information has natural connections - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. So why do we let AI systems break them apart? </p>
 <h2 id="introduction">Introduction</h2>
-<p>Supermat inroduced a novel data representation framework for the AI era. </p>
-<h2 id="citations">Citations</h2>
-<p>Citations present one of the most significant challenges in NLP: when an LLM answers a question, how do we trace its source information? This challenge intersects with important AI ethics discussions about properly attributing and recognizing others' work.</p>
-<p>By preserving the inherent structure of documents, we propose a human and machine-readable citation system that addresses these concerns.</p>
-<h3 id="structure-id">Structure ID</h3>
-<p>The Structure ID is a unique referencing system that leverages language hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes text highlighting and attribution straightforward.</p>
-<p>The Strucutre ID, goes like this <strong><code>2.1.4.8</code></strong>. This points specifically to <strong>Document Index number <code>2</code></strong>, the <strong><code>1</code>st section</strong> in that document, then the <strong><code>4</code>th paragraph</strong> in that section, and finally the <strong><code>8</code>th sentence</strong> in that paragraph.
+<p>Supermat inroduces a novel data representation framework for the AI era, making relationships explicit and retrievable by design.</p>
+<h3 id="structured-citations">Structured Citations</h3>
+<p>Our Structure ID is a unique referencing system that leverages language hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes precise attribution straightforward.</p>
+<p>The Structure ID, goes like this <strong><code>2.1.4.8</code></strong>. This points specifically to <strong>Document Index number <code>2</code></strong>, the <strong><code>1</code>st section</strong> in that document, then the <strong><code>4</code>th paragraph</strong> in that section, and finally the <strong><code>8</code>th sentence</strong> in that paragraph.
 This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.</p>
 <p>Through post-processing of LLM outputs, this structure enables direct retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.</p>
 <h2 id="evaluation">Evaluation</h2>
-<p>We chose to work with the <a href="https://www.atticusprojectai.org/cuad">CUAD</a> dataset, a QnA dataset in the legal domain, to showcase our approach. The legal domain provides an excellent testing ground due to its precise and elaborate nature, making it one of the most challenging domains for LLMs due to document volume. Legal documents contain strong structural elements that are vital to preserve when performing NLP tasks.We evaluated our approach against two benchmarks:</p>
+<p>We chose to work with the <a href="https://www.atticusprojectai.org/cuad">CUAD</a> dataset to showcase our approach. The legal domain provides an excellent testing ground due to its complexity and ambigious language. If Supermat works here, it can be generalized to other domains. We evaluated our approach against two benchmarks:</p>
 <ol>
 <li>A baseline standard chunking strategy</li>
 <li>LangChain's current state-of-the-art <a href="https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html">SemanticChunker</a> with <code>breakpoint_threshold_type="percentile"</code></li>
 </ol>
-<p>In our internal evals, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
+<p>Key Metrics:</p>
 <blockquote>
 <p><strong>Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%</strong></p>
 </blockquote>
+<p>In our internal evals, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>Our initial findings suggest significant untapped potential in this area. This framework represents just the beginning of our work. We aim to demonstrate that preserving language structure in AI systems yields better results than traditional chunking methods used in RAG systems. Rather than discarding these structures due to complexity, we advocate for deeper investigation into how they can be preserved and leveraged effectively.</p>
+<p>This is only the beginning of our journey as we build products on this foundation. </p>
+<p>Our findings suggest significant untapped potential in this area. Preserving and representing both explicit and implicit connections within data before any chunking or processing yields better results than immediatly jumping into chunking.</p>
+<p>Far beyond just efficiency gains, we beleive this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those. </p>
+<h2 id="contributing">Contributing</h2>
+<p>We welcome contributers and collaborators to join us on this journey. </p>
 
 
 

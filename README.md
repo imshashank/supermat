@@ -6,7 +6,7 @@
 Current retrieval systems face two fundamental limitations that we've accepted as normal. 
 
 First, as they fragment information during processing, they lose natural relationships. 
-While vector search is powerful for finding semantically related content, similarity isn't same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing that was clear and direct before processing. 
+While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
 The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. 
 
 Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  
@@ -26,7 +26,7 @@ Our Structure ID is a unique referencing system that leverages hierarchies (docu
 The Structure ID, goes like this **`2.1.4.8`**. This points specifically to **Document Index number `2`**, the **`1`st section** in that document, then the **`4`th paragraph** in that section, and finally the **`8`th sentence** in that paragraph.
 This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.
 
-Through post-processing of LLM outputs, this structure enables direct retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.
+Furthermore, through post-processing of LLM outputs, this structure enables direct verbatim retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.
 
 ## Evaluation
 

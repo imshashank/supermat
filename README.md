@@ -21,7 +21,7 @@ Supermat inroduces a novel data representation framework for the AI era, making 
 
 ### Structured Citations
 
-Our Structure ID is a unique referencing system that leverages language hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes precise attribution straightforward.
+Our Structure ID is a unique referencing system that leverages hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes precise attribution straightforward.
 
 The Structure ID, goes like this **`2.1.4.8`**. This points specifically to **Document Index number `2`**, the **`1`st section** in that document, then the **`4`th paragraph** in that section, and finally the **`8`th sentence** in that paragraph.
 This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.

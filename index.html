@@ -1473,7 +1473,7 @@
 <h2 id="preface">Preface</h2>
 <p>Current retrieval systems face two fundamental limitations that we've accepted as normal. </p>
 <p>First, as they fragment information during processing, they lose natural relationships. 
-While vector search is powerful for finding semantically related content, similarity isn't same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing that was clear and direct before processing. 
+While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
 The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. </p>
 <p>Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  </p>
 <p>Our aproach solves both these problems with a fundamental insight. 
@@ -1484,7 +1484,7 @@ Information has natural connections - from documents to sections to paragraphs t
 <p>Our Structure ID is a unique referencing system that leverages hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes precise attribution straightforward.</p>
 <p>The Structure ID, goes like this <strong><code>2.1.4.8</code></strong>. This points specifically to <strong>Document Index number <code>2</code></strong>, the <strong><code>1</code>st section</strong> in that document, then the <strong><code>4</code>th paragraph</strong> in that section, and finally the <strong><code>8</code>th sentence</strong> in that paragraph.
 This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.</p>
-<p>Through post-processing of LLM outputs, this structure enables direct retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.</p>
+<p>Furthermore, through post-processing of LLM outputs, this structure enables direct verbatim retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.</p>
 <h2 id="evaluation">Evaluation</h2>
 <p>We chose to work with the <a href="https://www.atticusprojectai.org/cuad">CUAD</a> dataset to showcase our approach. The legal domain provides an excellent testing ground due to its complexity and ambigious language. If Supermat works here, it can be generalized to other domains. We evaluated our approach against two benchmarks:</p>
 <ol>

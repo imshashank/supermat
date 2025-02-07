@@ -352,6 +352,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#contributing" class="md-nav__link">
     <span class="md-ellipsis">
       Contributing
@@ -1519,6 +1528,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#contributing" class="md-nav__link">
     <span class="md-ellipsis">
       Contributing
@@ -1545,22 +1563,22 @@
 
 <h1 id="_1"><img alt="supermat" src="assets/supermat-logo-black-sub.png" title="supermat" /></h1>
 <h2 id="preface">Preface</h2>
-<p>Current retrieval systems face two fundamental limitations that we've accepted as normal. </p>
-<p>First, as they fragment information during processing, they lose natural relationships. 
+<p>Current retrieval systems face two fundamental limitations that we've accepted as normal.</p>
+<p>First, as they fragment information during processing, they lose natural relationships.
 While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
 The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. </p>
 <p>Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  </p>
-<p>Our aproach solves both these problems with a fundamental insight. 
+<p>Our approach solves both these problems with a fundamental insight. 
 Information has natural connections - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. So why do we let AI systems break them apart? </p>
 <h2 id="introduction">Introduction</h2>
-<p>Supermat inroduces a novel data representation framework for the AI era, making relationships explicit and retrievable by design.</p>
+<p>Supermat introduces a novel data representation framework for the AI era, making relationships explicit and retrievable by design.</p>
 <h3 id="structured-citations">Structured Citations</h3>
 <p>Our Structure ID is a unique referencing system that leverages hierarchies (document, section, paragraph, and sentence) to precisely locate text. This intuitive system makes precise attribution straightforward.</p>
 <p>The Structure ID, goes like this <strong><code>2.1.4.8</code></strong>. This points specifically to <strong>Document Index number <code>2</code></strong>, the <strong><code>1</code>st section</strong> in that document, then the <strong><code>4</code>th paragraph</strong> in that section, and finally the <strong><code>8</code>th sentence</strong> in that paragraph.
 This simple yet powerful structure serves two purposes: it maintains connections between different text chunks while remaining token-efficient for LLM processing.</p>
 <p>Furthermore, through post-processing of LLM outputs, this structure enables direct verbatim retrieval of original content from source documents, reducing the need for token repetition and minimizing the risk of hallucinations.</p>
 <h2 id="evaluation">Evaluation</h2>
-<p>We chose to work with the <a href="https://www.atticusprojectai.org/cuad">CUAD</a> dataset to showcase our approach. The legal domain provides an excellent testing ground due to its complexity and ambigious language. If Supermat works here, it can be generalized to other domains. We evaluated our approach against two benchmarks:</p>
+<p>We chose to work with the <a href="https://www.atticusprojectai.org/cuad">CUAD</a> dataset to showcase our approach. The legal domain provides an excellent testing ground due to its complexity and ambiguous language. If Supermat works here, it can be generalized to other domains. We evaluated our approach against two benchmarks:</p>
 <ol>
 <li>A baseline standard chunking strategy</li>
 <li>LangChain's current state-of-the-art <a href="https://python.langchain.com/api_reference/experimental/text_splitter/langchain_experimental.text_splitter.SemanticChunker.html">SemanticChunker</a> with <code>breakpoint_threshold_type="percentile"</code></li>
@@ -1569,13 +1587,23 @@ This simple yet powerful structure serves two purposes: it maintains connections
 <blockquote>
 <p><strong>Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%</strong></p>
 </blockquote>
-<p>In our internal evals, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
+<p>In our internal evalulations, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>This is only the beginning of our journey as we build products on this foundation. </p>
-<p>Our findings suggest significant untapped potential in this area. Preserving and representing both explicit and implicit connections within data before any chunking or processing yields better results than immediatly jumping into chunking.</p>
-<p>Far beyond just efficiency gains, we beleive this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those. </p>
+<p>Our findings suggest significant untapped potential in this area. Preserving and representing both explicit and implicit connections within data before any chunking or processing yields better results than immediately jumping into chunking.</p>
+<p>Far beyond just efficiency gains, we believe this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those. </p>
+<h2 id="quick-start">Quick Start</h2>
+<blockquote>
+<p>Take a look at the Installation section in our <a href="https://supermatai.github.io/supermat/Installation/">docs</a>.</p>
+</blockquote>
+<ol>
+<li>Clone this repository</li>
+<li>Setup <a href="https://python-poetry.org/docs/#installation">python-poetry</a> in your system.</li>
+<li>Run <code>poetry install --with=frontend --all-extras</code> in your virtual environment to install all required dependencies.</li>
+<li>In terminal run <code>python -m supermat.gradio</code> to the run the gradio interface to see it in action.</li>
+</ol>
 <h2 id="contributing">Contributing</h2>
-<p>We welcome contributers and collaborators to join us on this journey. </p>
+<p>We welcome contributors and collaborators to join us on this journey.</p>
 
 
 

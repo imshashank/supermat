@@ -13,6 +13,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnableSerializable
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from supermat.core.models.parsed_document import ParsedDocument
 from supermat.core.parser.file_processor import FileProcessor
 from supermat.langchain.bindings import SupermatRetriever, get_default_chain
 
@@ -140,6 +141,22 @@ class LLMChat:
         except Exception as e:
             return f"Error: {str(e)}\n{traceback.format_exc()}"
 
+    def refresh(self) -> list[str]:
+        if not self.retriever:
+            raise ValueError("Parse pdf documents first.")
+        return list(self.retriever._document_index_map.keys())
+
+    def get_document(self, document: str) -> list[dict]:
+        if not self.retriever:
+            raise ValueError("Parse pdf documents first.")
+        if document == "all":
+            return ParsedDocument.dump_python(self.retriever.parsed_docs)
+        elif document == "None":
+            return []
+        else:
+            filtered_docs = [parsed_doc for parsed_doc in self.retriever.parsed_docs if parsed_doc.document == document]
+            return ParsedDocument.dump_python(filtered_docs)
+
 
 def create_llm_interface():
     llm_chat = LLMChat()
@@ -201,11 +218,28 @@ def create_llm_interface():
                 with gr.Column():
                     collection_id = gr.State(random.randint(1, 100))
                     collection_name = gr.Textbox(f"TEST{collection_id.value}", label="Collection Name")
-                    upload_btn = gr.Button("Parse PDF files.")
+                    upload_btn = gr.Button("Parse PDF files.", variant="primary")
                 with gr.Column():
                     upload_status = gr.Textbox(label="Upload Status")
 
                 upload_btn.click(fn=llm_chat.parse_files, inputs=[collection_name, pdf_files], outputs=upload_status)
+
+        with gr.Tab("Documents"):
+            with gr.Row():
+                refresh_btn = gr.Button("Refresh")
+                doc_drop_down = gr.Dropdown(
+                    choices=["None"], label="Document", value="None", interactive=True, key="documents_dropdown"
+                )
+
+                def update_documents():
+                    documents_list = llm_chat.refresh()
+                    return gr.update(choices=["None", "All"] + documents_list, label="Document", value="None")
+
+                refresh_btn.click(fn=update_documents, outputs=doc_drop_down)
+            with gr.Row():
+                parsed_document = gr.JSON()
+
+            doc_drop_down.change(llm_chat.get_document, inputs=[doc_drop_down], outputs=parsed_document)
 
         with gr.Tab("Chat"):
 

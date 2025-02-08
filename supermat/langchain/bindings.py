@@ -223,12 +223,6 @@ def get_default_prompt() -> ChatPromptTemplate:
         "you must a cite block like this `<cite ref='5.2.3.0' />`. "
         "Think through how to use the `<cite />` block like shown above. "
     )
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "{question}"),
-        ]
-    )
     prompt = ChatPromptTemplate.from_template(system_prompt)
     return prompt
 

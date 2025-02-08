@@ -110,7 +110,7 @@ def create_text_properties(element: Element) -> TextChunkProperty:
 
 
 def _create_sentence(sentence_structure: str, sentence: str, paragraph_chunk: TextChunk) -> TextChunk:
-    copy_dict = paragraph_chunk.model_dump(include={"key", "properties"}, exclude_unset=True) | {
+    copy_dict = paragraph_chunk.model_dump(include={"key", "properties", "document"}, exclude_unset=True) | {
         "structure": sentence_structure,
         "text": sentence,
         "key": get_keywords(sentence),

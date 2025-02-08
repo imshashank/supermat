@@ -59,7 +59,7 @@ def split_path(path: str) -> list[str]:
 
 
 def create_image_chunk(
-    file_path: str, element: Element, archive: zipfile.ZipFile, element_structure: str
+    file_path: str, element: Element, archive: zipfile.ZipFile, element_structure: str, document_name: str
 ) -> ImageChunk | None:
     try:
         with archive.open(file_path) as f:
@@ -68,6 +68,7 @@ def create_image_chunk(
         assert element.Bounds is not None
         assert element.Page is not None
         image_chunk = ImageChunk(
+            document=document_name,
             structure=element_structure,
             object_id=element.ObjectID,
             bounds=element.Bounds,
@@ -139,10 +140,11 @@ def append_sentences(text_chunk: TextChunk) -> TextChunk:
     return text_chunk
 
 
-def create_text_chunk(element: Element, element_structure: str) -> TextChunk | FootnoteChunk:
+def create_text_chunk(element: Element, element_structure: str, document_name: str) -> TextChunk | FootnoteChunk:
     assert element.Text
     if element.Path and element.Path.startswith("//Document/Footnote"):
         chunk = FootnoteChunk(
+            document=document_name,
             structure=element_structure,
             text=element.Text,
             key=[],
@@ -150,6 +152,7 @@ def create_text_chunk(element: Element, element_structure: str) -> TextChunk | F
         )
     else:
         chunk = TextChunk(
+            document=document_name,
             structure=element_structure,
             text=element.Text,
             key=[],
@@ -161,7 +164,7 @@ def create_text_chunk(element: Element, element_structure: str) -> TextChunk | F
 
 
 def process_list_items(
-    elements: list[Element], starting_element_number: int, element_structure: str
+    elements: list[Element], starting_element_number: int, element_structure: str, document_name: str
 ) -> tuple[TextChunk | None, int]:
     next_elements = elements[starting_element_number:]
     if not next_elements:
@@ -180,6 +183,7 @@ def process_list_items(
 
     list_chunk_text = "\n".join(all_list_item_text)
     list_chunk = TextChunk(
+        document=document_name,
         structure=element_structure,
         text=list_chunk_text,
         key=get_keywords(list_chunk_text),
@@ -204,6 +208,7 @@ def split_element_chunk(element: Element) -> list[Element]:
 def convert_adobe_to_parsed_document(
     adobe_data: AdobeStructuredData,
     archive: zipfile.ZipFile,
+    document_name: str,
 ) -> ParsedDocumentType:
     section_number = 0
     passage_number = 0
@@ -239,20 +244,22 @@ def convert_adobe_to_parsed_document(
 
         if element.filePaths:
             for file_path in element.filePaths:
-                image_chunk = create_image_chunk(file_path, element, archive, element_structure)
+                image_chunk = create_image_chunk(file_path, element, archive, element_structure, document_name)
                 if image_chunk:
                     figure_count += 1
                     image_chunk.figure = f"{figure_count} - {Path(file_path).name}"
                     chunks.append(image_chunk)
         elif path[1][0] == "L":
-            chunk, skip_elements = process_list_items(adobe_data.elements, element_number, element_structure)
+            chunk, skip_elements = process_list_items(
+                adobe_data.elements, element_number, element_structure, document_name
+            )
             if chunk:
                 chunks.append(chunk)
         elif element.Text is not None and not (path[1].startswith("Table") or element.Bounds is None):
             element_chunks = split_element_chunk(element)
             for element_chunk in element_chunks:
                 element_chunk_structure = get_structure(section_number, passage_number)
-                chunk = create_text_chunk(element_chunk, element_chunk_structure)
+                chunk = create_text_chunk(element_chunk, element_chunk_structure, document_name)
                 chunks.append(chunk)
                 passage_number += 1
 
@@ -263,10 +270,7 @@ def load_adobe_zip(pdf_file: Path, zip_file: Path) -> ParsedDocumentType:
     with zipfile.ZipFile(zip_file, "r") as archive:
         structured_data_file = archive.open("structuredData.json")
         structured_data = AdobeStructuredData.model_validate_json(structured_data_file.read())
-        documents = convert_adobe_to_parsed_document(structured_data, archive)
-        document_name = pdf_file.stem
-        for chunk in documents:
-            chunk.document = document_name
+        documents = convert_adobe_to_parsed_document(structured_data, archive, document_name=pdf_file.stem)
 
         return documents
 

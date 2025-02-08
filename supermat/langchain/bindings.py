@@ -97,7 +97,6 @@ class SupermatRetriever(BaseRetriever):
 
         """
         for chunk in self.parsed_docs:
-            assert chunk.document
             doc_index = document_index_map[chunk.document]
             chunk.structure = f"{doc_index}.{chunk.structure}"
 

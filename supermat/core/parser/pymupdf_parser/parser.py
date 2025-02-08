@@ -28,7 +28,7 @@ def get_path(*args: int) -> str:
     return "/".join(map(str, args))
 
 
-def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
+def process_pymupdf(parsed_pdf: PyMuPDFDocument, document_name: str) -> ParsedDocumentType:
     """Converts a pdf, page and by page, and block by block using PyMuPDF.
 
     Args:
@@ -54,6 +54,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                     structure = get_structure(page.number + 1, block.number + 1, line_no + 1)
 
                     sentence_chunk = TextChunk(
+                        document=document_name,
                         structure=structure,
                         properties=TextChunkProperty(
                             font=FontProperties(
@@ -75,6 +76,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
 
                 text = " ".join(sentence_chunk.text for sentence_chunk in sentence_chunks)
                 chunk = TextChunk(
+                    document=document_name,
                     structure=get_structure(page.number + 1, block.number + 1),
                     text=text,
                     key=get_keywords(text),
@@ -92,6 +94,7 @@ def process_pymupdf(parsed_pdf: PyMuPDFDocument) -> ParsedDocumentType:
                 )
             elif isinstance(block, ImageBlock):
                 chunk = ImageChunk(
+                    document=document_name,
                     structure=get_structure(page.number + 1, block.number + 1),
                     bounds=block.bbox,
                     page=page.number,
@@ -114,4 +117,4 @@ class PyMuPDFParser(Parser):
 
     def parse(self, file_path: Path) -> ParsedDocumentType:
         parsed_pdf = parse_pdf(file_path)
-        return process_pymupdf(parsed_pdf)
+        return process_pymupdf(parsed_pdf, document_name=file_path.stem)

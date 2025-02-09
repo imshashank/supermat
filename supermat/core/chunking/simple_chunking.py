@@ -24,6 +24,7 @@ class SimpleChunker(BaseChunker):
             document_id=doc_id,
             text=section.text,
             metadata=BaseChunkMetadata(
+                document=section.document,
                 type=section.type_,
                 structure=section.structure,
                 page_number=section.properties.page,

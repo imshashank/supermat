@@ -1,6 +1,6 @@
 # ![supermat](docs/assets/supermat-logo-black-sub.png "supermat")
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Nh3JdhP_-EIGM0RnZ5RBijzkhlsrP86-?usp=sharing) [![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/legendof-selda/supermat-demo)
+[![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/legendof-selda/supermat-demo)
 
 ## Preface
 

@@ -9,7 +9,7 @@
 
 ## Setting up Adobe
 
-> We weren't able to capture hierarchical structure with our open source pdf parsing libraries. We are actively working on other alternatives that can parse the pdf files with the hierarchical structure.
+> We weren't able to capture hierarchical structure like section, paragraph, and sentences with our open source pdf parsing libraries. We are actively working on other alternatives that can parse the pdf files with this hierarchical structure. PyMuPDF provides in page, block and lines, which isn't exactly the same.
 
 1. Setup with Adobe PDF Services API as shown [here](https://developer.adobe.com/document-services/docs/overview/pdf-services-api/)
 2. Provide the credentials in the `.env` file

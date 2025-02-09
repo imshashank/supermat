@@ -97,7 +97,6 @@ class SupermatRetriever(BaseRetriever):
 
         """
         for chunk in self.parsed_docs:
-            assert chunk.document
             doc_index = document_index_map[chunk.document]
             chunk.structure = f"{doc_index}.{chunk.structure}"
 
@@ -223,12 +222,6 @@ def get_default_prompt() -> ChatPromptTemplate:
         "Example: If the answer is in a document with `citation_id='5.2.3.0'`, "
         "you must a cite block like this `<cite ref='5.2.3.0' />`. "
         "Think through how to use the `<cite />` block like shown above. "
-    )
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "{question}"),
-        ]
     )
     prompt = ChatPromptTemplate.from_template(system_prompt)
     return prompt

@@ -147,7 +147,7 @@ class BaseChunk(CustomBaseModel):
 
     type_: Literal["Text", "Image", "Footnote"] = Field(alias="type", frozen=True)
     structure: str
-    document: str | None = None
+    document: str = ""
 
     @overload
     def has_subsection(self, sub_section: BaseChunk) -> bool: ...  # noqa: U100, E704

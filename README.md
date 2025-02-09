@@ -1,17 +1,81 @@
 # ![supermat](docs/assets/supermat-logo-black-sub.png "supermat")
 
-## Preface
+[![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/legendof-selda/supermat-demo)
 
-Current retrieval systems face two fundamental limitations that we've accepted as normal.
+## Quick Start
 
-First, as they fragment information during processing, they lose natural relationships.
-While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
-The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. 
+> Take a look at the Installation section in our [docs](https://supermatai.github.io/supermat/Installation/).
 
-Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  
+1. Clone this repository
+2. Setup [python-poetry](https://python-poetry.org/docs/#installation) in your system.
+3. Run `poetry install --with=frontend --all-extras` in your virtual environment to install all required dependencies.
+4. In terminal run `python -m supermat.gradio` to the run the gradio interface to see it in action.
+5. You can also take a look at our demo notebook [`notebooks/pdf_demo.ipynb`](notebooks/pdf_demo.ipynb)
 
-Our approach solves both these problems with a fundamental insight. 
-Information has natural connections - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. So why do we let AI systems break them apart? 
+### HuggingFace spaces
+
+Interact with out live demo over at HuggingFace spaces [here](https://huggingface.co/spaces/legendof-selda/supermat-demo).
+
+### Brief Code Overview
+
+#### `FileProcessor`
+
+The FileProcessor class is used to register different `Handler`s for various types of documents.
+All that needs to be done is,
+
+```python
+from supermat import FileProcessor, ParsedDocument
+
+document: ParsedDocument = FileProcessor.parse_file(Path(<your pdf file>))
+```
+
+The above picks the main handler for the given file and parses it to a `ParsedDocument` pydantic model.
+Take a closer look at `supermat.core.models.parsed_document`.
+
+> Currently, Adobe is set to be the main handler.
+
+If you want to get a list of handlers for a file to choose from,
+
+```python
+from supermat import FileProcessor
+from supermat.core.file_processor import Handler
+
+
+handlers: dict[str, Handler] = FileProcessor.get_handlers(Path(<your pdf file>))
+```
+
+This provides a dictionary of handlers to choose from to parse a document.
+
+```python
+from supermat import FileProcessor
+
+document = FileProcessor.get_handler('<handler_name>').parse(Path(<your pdf file>))
+```
+
+#### `SupermatRetriever`
+
+The `SupermatRetriever` is a drop in replacement for Langchain's [VectorStore](https://python.langchain.com/docs/concepts/vectorstores/).
+
+```python
+from supermat.langchain.bindings import SupermatRetriever
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+
+
+embedding_model=HuggingFaceEmbeddings(
+    model_name="thenlper/gte-base"
+)
+
+retriever = SupermatRetriever(
+    parsed_docs=documents,
+    vector_store=Chroma(
+        embedding_function=embedding_model,
+        collection_name="PDFS_SUPERMAT_DEMO",
+    ),
+)
+```
+
+Now `retriever` can be used as a regular langchain component in any RAG based project.
 
 ## Introduction
 
@@ -38,7 +102,9 @@ Key Metrics:
 
 > **Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%**
 
-In our internal evalulations, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
+In our internal evaluation, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
+
+For more details, take a look [here](https://supermatai.github.io/supermat/Evaluation/).
 
 ## Conclusion
 
@@ -46,16 +112,7 @@ This is only the beginning of our journey as we build products on this foundatio
 
 Our findings suggest significant untapped potential in this area. Preserving and representing both explicit and implicit connections within data before any chunking or processing yields better results than immediately jumping into chunking.
 
-Far beyond just efficiency gains, we believe this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those. 
-
-## Quick Start
-
-> Take a look at the Installation section in our [docs](https://supermatai.github.io/supermat/Installation/).
-
-1. Clone this repository
-2. Setup [python-poetry](https://python-poetry.org/docs/#installation) in your system.
-3. Run `poetry install --with=frontend --all-extras` in your virtual environment to install all required dependencies.
-4. In terminal run `python -m supermat.gradio` to the run the gradio interface to see it in action.
+Far beyond just efficiency gains, we believe this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those.
 
 ## Contributing
 

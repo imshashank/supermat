@@ -34,6 +34,14 @@ class LLMProvider(StrEnum):
     ollama = "Ollama"
     anthropic = "Anthropic"
     openai = "OpenAI"
+    azure_openai = "Azure OpenAI"
+
+
+BASE_URLS = {
+    LLMProvider.openai: "https://api.openai.com",
+    LLMProvider.anthropic: "https://api.anthropic.com",
+    LLMProvider.ollama: "http://localhost:11434",
+}
 
 
 class LLMChat:
@@ -72,13 +80,41 @@ class LLMChat:
                     from langchain_anthropic import ChatAnthropic  # noqa: I900
 
                     self.chat_model = ChatAnthropic(
-                        model_name=model, temperature=temperature, timeout=None, api_key=credentials, stop=None
+                        model_name=model,
+                        temperature=temperature,
+                        timeout=None,
+                        api_key=credentials,
+                        stop=None,
+                        base_url=base_url,
                     )
                 case LLMProvider.openai:
                     from langchain_openai import ChatOpenAI  # noqa: I900
 
                     temperature = 0.7 if temperature is None else temperature
-                    self.chat_model = ChatOpenAI(model=model, temperature=temperature, api_key=credentials)
+                    self.chat_model = ChatOpenAI(
+                        model=model, temperature=temperature, api_key=credentials, base_url=base_url
+                    )
+                case LLMProvider.azure_openai:
+                    from langchain_openai import AzureChatOpenAI
+
+                    if not base_url:
+                        raise gr.Error("Azure OpenAI requires API Enpoint")
+
+                    api_version = None
+                    api_version_match = re.search(r"[?&]api-version=([^&]+)", base_url)
+
+                    if api_version_match:
+                        api_version = api_version_match.group(1)
+                    else:
+                        raise gr.Error("Pass in `api_version` as query parameter in Azure API Endpoint")
+
+                    self.chat_model = AzureChatOpenAI(
+                        api_key=credentials,
+                        azure_endpoint=base_url,
+                        azure_deployment=model,
+                        api_version=api_version,
+                        temperature=0,
+                    )
                 case _:
                     raise gr.Error(f"Invalid LLM Provider {provider}")
 
@@ -86,7 +122,7 @@ class LLMChat:
             return f"{self.chat_model.get_name()} initialized successfully!"
 
         except Exception as e:
-            return f"Error initializing client: {str(e)}"
+            raise gr.Error(f"Error initializing client: {str(e)}")
 
     def update_handler(self, handler_name: str):
         self.handler_name = handler_name
@@ -168,7 +204,7 @@ class LLMChat:
     def get_document(self, document: str) -> list[dict]:
         if not self.retriever:
             raise gr.Error("Parse pdf documents first.")
-        if document == "all":
+        if document == "All":
             return ParsedDocument.dump_python(self.retriever.parsed_docs)
         elif document == "None":
             return []
@@ -188,7 +224,7 @@ def create_llm_interface():
                 )
 
             @gr.render(inputs=provider_option, triggers=[provider_option.change])
-            def provider_update(provider: str):
+            def provider_update(provider: LLMProvider):
                 if provider == "--SELECT--":
                     raise gr.Error("Select a provider from dropdown.", print_exception=False)
                 with gr.Row():
@@ -197,7 +233,7 @@ def create_llm_interface():
                     with gr.Column():
                         if provider == LLMProvider.ollama:
                             base_url = gr.Textbox(
-                                value="http://localhost:11434",
+                                value=BASE_URLS[provider],
                                 label="API Host",
                                 placeholder="e.g., http://localhost:11434 for Ollama",
                             )
@@ -215,11 +251,15 @@ def create_llm_interface():
                                 label="API Key/Credentials", type="password", placeholder="Enter your API key here"
                             )
                             model = gr.Textbox(
-                                label=f"Select {provider} model",
+                                label=f"{provider} model",
                             )
-                            llm_init_inputs = [provider_option, model, credentials]
-                            initialize_client = lambda p, m, c: llm_chat.initialize_client(  # noqa: E731
-                                provider=p, model=m, credentials=c
+                            base_url = gr.Textbox(
+                                value=BASE_URLS.get(provider),
+                                label="Azure Endpoint" if provider == LLMProvider.azure_openai else "API Host",
+                            )
+                            llm_init_inputs = [provider_option, model, credentials, base_url]
+                            initialize_client = lambda p, m, c, b: llm_chat.initialize_client(  # noqa: E731
+                                provider=p, model=m, credentials=c, base_url=b
                             )
 
                     with gr.Column():

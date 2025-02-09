@@ -38,8 +38,6 @@ class LLMProvider(StrEnum):
 
 
 BASE_URLS = {
-    LLMProvider.openai: "https://api.openai.com",
-    LLMProvider.anthropic: "https://api.anthropic.com",
     LLMProvider.ollama: "http://localhost:11434",
 }
 
@@ -64,6 +62,7 @@ class LLMChat:
     ) -> str:
         """Initialize the LangChain chat model based on selected provider."""
         gr.Info("Initializaing LLM")
+        base_url = base_url if base_url else None
         self.provider = provider
         self.model = model
 

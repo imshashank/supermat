@@ -1,5 +1,7 @@
 # ![supermat](docs/assets/supermat-logo-black-sub.png "supermat")
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Nh3JdhP_-EIGM0RnZ5RBijzkhlsrP86-?usp=sharing) [![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/legendof-selda/supermat-demo)
+
 ## Preface
 
 Current retrieval systems face two fundamental limitations that we've accepted as normal.
@@ -38,7 +40,7 @@ Key Metrics:
 
 > **Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%**
 
-In our internal evalulations, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
+In our internal evaluation, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
 
 ## Conclusion
 

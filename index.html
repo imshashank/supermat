@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
     
     
       
@@ -301,11 +301,59 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#preface" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Preface
+      Quick Start
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#huggingface-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      HuggingFace spaces
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#brief-code-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Brief Code Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Brief Code Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fileprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      FileProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supermatretriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      SupermatRetriever
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -346,15 +394,6 @@
   <a href="#conclusion" class="md-nav__link">
     <span class="md-ellipsis">
       Conclusion
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start
     </span>
   </a>
   
@@ -1477,11 +1516,59 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#preface" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
-      Preface
+      Quick Start
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#huggingface-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      HuggingFace spaces
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#brief-code-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Brief Code Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Brief Code Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fileprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      FileProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supermatretriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      SupermatRetriever
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1528,15 +1615,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    <span class="md-ellipsis">
-      Quick Start
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#contributing" class="md-nav__link">
     <span class="md-ellipsis">
       Contributing
@@ -1562,14 +1640,65 @@
 
 
 <h1 id="_1"><img alt="supermat" src="assets/supermat-logo-black-sub.png" title="supermat" /></h1>
-<h2 id="preface">Preface</h2>
-<p>Current retrieval systems face two fundamental limitations that we've accepted as normal.</p>
-<p>First, as they fragment information during processing, they lose natural relationships.
-While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
-The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. </p>
-<p>Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  </p>
-<p>Our approach solves both these problems with a fundamental insight. 
-Information has natural connections - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. So why do we let AI systems break them apart? </p>
+<p><a href="https://huggingface.co/spaces/legendof-selda/supermat-demo"><img alt="Open in Spaces" src="https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg" /></a></p>
+<h2 id="quick-start">Quick Start</h2>
+<blockquote>
+<p>Take a look at the Installation section in our <a href="https://supermatai.github.io/supermat/Installation/">docs</a>.</p>
+</blockquote>
+<ol>
+<li>Clone this repository</li>
+<li>Setup <a href="https://python-poetry.org/docs/#installation">python-poetry</a> in your system.</li>
+<li>Run <code>poetry install --with=frontend --all-extras</code> in your virtual environment to install all required dependencies.</li>
+<li>In terminal run <code>python -m supermat.gradio</code> to the run the gradio interface to see it in action.</li>
+<li>You can also take a look at our demo notebook <a href="notebooks/pdf_demo.ipynb"><code>notebooks/pdf_demo.ipynb</code></a></li>
+</ol>
+<h3 id="huggingface-spaces">HuggingFace spaces</h3>
+<p>Interact with out live demo over at HuggingFace spaces <a href="https://huggingface.co/spaces/legendof-selda/supermat-demo">here</a>.</p>
+<h3 id="brief-code-overview">Brief Code Overview</h3>
+<h4 id="fileprocessor"><code>FileProcessor</code></h4>
+<p>The FileProcessor class is used to register different <code>Handler</code>s for various types of documents.
+All that needs to be done is,</p>
+<pre><code class="language-python">from supermat import FileProcessor, ParsedDocument
+
+document: ParsedDocument = FileProcessor.parse_file(Path(&lt;your pdf file&gt;))
+</code></pre>
+<p>The above picks the main handler for the given file and parses it to a <code>ParsedDocument</code> pydantic model.
+Take a closer look at <code>supermat.core.models.parsed_document</code>.</p>
+<blockquote>
+<p>Currently, Adobe is set to be the main handler.</p>
+</blockquote>
+<p>If you want to get a list of handlers for a file to choose from,</p>
+<pre><code class="language-python">from supermat import FileProcessor
+from supermat.core.file_processor import Handler
+
+
+handlers: dict[str, Handler] = FileProcessor.get_handlers(Path(&lt;your pdf file&gt;))
+</code></pre>
+<p>This provides a dictionary of handlers to choose from to parse a document.</p>
+<pre><code class="language-python">from supermat import FileProcessor
+
+document = FileProcessor.get_handler('&lt;handler_name&gt;').parse(Path(&lt;your pdf file&gt;))
+</code></pre>
+<h4 id="supermatretriever"><code>SupermatRetriever</code></h4>
+<p>The <code>SupermatRetriever</code> is a drop in replacement for Langchain's <a href="https://python.langchain.com/docs/concepts/vectorstores/">VectorStore</a>.</p>
+<pre><code class="language-python">from supermat.langchain.bindings import SupermatRetriever
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+
+
+embedding_model=HuggingFaceEmbeddings(
+    model_name=&quot;thenlper/gte-base&quot;
+)
+
+retriever = SupermatRetriever(
+    parsed_docs=documents,
+    vector_store=Chroma(
+        embedding_function=embedding_model,
+        collection_name=&quot;PDFS_SUPERMAT_DEMO&quot;,
+    ),
+)
+</code></pre>
+<p>Now <code>retriever</code> can be used as a regular langchain component in any RAG based project.</p>
 <h2 id="introduction">Introduction</h2>
 <p>Supermat introduces a novel data representation framework for the AI era, making relationships explicit and retrievable by design.</p>
 <h3 id="structured-citations">Structured Citations</h3>
@@ -1587,21 +1716,12 @@ This simple yet powerful structure serves two purposes: it maintains connections
 <blockquote>
 <p><strong>Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%</strong></p>
 </blockquote>
-<p>In our internal evalulations, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
+<p>In our internal evaluation, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.</p>
+<p>For more details, take a look <a href="https://supermatai.github.io/supermat/Evaluation/">here</a>.</p>
 <h2 id="conclusion">Conclusion</h2>
 <p>This is only the beginning of our journey as we build products on this foundation. </p>
 <p>Our findings suggest significant untapped potential in this area. Preserving and representing both explicit and implicit connections within data before any chunking or processing yields better results than immediately jumping into chunking.</p>
-<p>Far beyond just efficiency gains, we believe this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those. </p>
-<h2 id="quick-start">Quick Start</h2>
-<blockquote>
-<p>Take a look at the Installation section in our <a href="https://supermatai.github.io/supermat/Installation/">docs</a>.</p>
-</blockquote>
-<ol>
-<li>Clone this repository</li>
-<li>Setup <a href="https://python-poetry.org/docs/#installation">python-poetry</a> in your system.</li>
-<li>Run <code>poetry install --with=frontend --all-extras</code> in your virtual environment to install all required dependencies.</li>
-<li>In terminal run <code>python -m supermat.gradio</code> to the run the gradio interface to see it in action.</li>
-</ol>
+<p>Far beyond just efficiency gains, we believe this crucial intersection enables simplified yet powerful human + AI interfaces and novel operating models of tomorrow. We're building for those.</p>
 <h2 id="contributing">Contributing</h2>
 <p>We welcome contributors and collaborators to join us on this journey.</p>
 
@@ -1626,7 +1746,7 @@ This simple yet powerful structure serves two purposes: it maintains connections
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 7, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 9, 2025</span>
   </span>
 
     
@@ -1636,7 +1756,7 @@ This simple yet powerful structure serves two purposes: it maintains connections
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 7, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">February 9, 2025</span>
   </span>
 
     
@@ -1705,7 +1825,7 @@ This simple yet powerful structure serves two purposes: it maintains connections
     <script id="__config" type="application/json">{"base": ".", "features": ["navigation.path", "navigation.top", "navigation.instant"], "search": "assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="assets/javascripts/bundle.f1b6f286.min.js"></script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
       

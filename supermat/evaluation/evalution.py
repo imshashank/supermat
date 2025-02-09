@@ -19,12 +19,10 @@ from langchain_core.runnables import (
 )
 from langchain_core.runnables.base import Runnable
 from langchain_huggingface import HuggingFaceEmbeddings
-from tqdm.auto import tqdm
 
 from supermat.core.models.parsed_document import ParsedDocumentType
 from supermat.core.parser import FileProcessor
 from supermat.langchain.bindings import SupermatRetriever
-
 
 
 def get_docs(pdf_files: list[Path]) -> ParsedDocumentType:
@@ -43,7 +41,7 @@ def get_docs(pdf_files: list[Path]) -> ParsedDocumentType:
     return documents
 
 
-def get_retriever(documents: ParsedDocumentType,collection_name:str) -> SupermatRetriever:
+def get_retriever(documents: ParsedDocumentType, collection_name: str) -> SupermatRetriever:
     retriever = SupermatRetriever(
         parsed_docs=documents,
         vector_store=Chroma(
@@ -59,7 +57,7 @@ def get_retriever(documents: ParsedDocumentType,collection_name:str) -> Supermat
 
 def get_qa_chain(retriever: SupermatRetriever, template: str, llm_model: BaseChatModel) -> Runnable:
     qa_chain = (
-        RunnableLambda(lambda x: x["Question"])
+        RunnableLambda(lambda x: x["Question"])  # pyright: ignore[reportIndexIssue]
         | RunnableParallel({"context": retriever, "Question": RunnablePassthrough()})
         | ChatPromptTemplate.from_template(template)
         | llm_model
@@ -79,7 +77,7 @@ def calculate_metrics(llm_model: BaseChatModel, evaluators: list, datset_path: P
     )
     test_run = run_without_langsmith(
         path_or_token_id=datset_path.as_posix(),
-        llm_or_chain_factory=qa_chain,  # was qachain2
+        llm_or_chain_factory=qa_chain,  # pyright: ignore[reportArgumentType]
         evaluation=eval_config,
         verbose=True,
         concurrency_level=10,

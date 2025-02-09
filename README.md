@@ -77,19 +77,6 @@ retriever = SupermatRetriever(
 
 Now `retriever` can be used as a regular langchain component in any RAG based project.
 
-## Preface
-
-Current retrieval systems face two fundamental limitations that we've accepted as normal.
-
-First, as they fragment information during processing, they lose natural relationships.
-While vector search is powerful for finding semantically related content, similarity isn't the same as actual relationships. Even the most sophisticated similarity search can't fully reconstruct explicit relationships nor make implicit connections clear . Systems end up spending massive resources trying to approximate context through similarity and further post-processing. 
-The result:  increasingly sophisticated systems bogged down by trying to reconstruct what was there all along. 
-
-Secondly, for the purpose of referencing, these systems use flat IDs - UUIDs and random strings - that can't express relationships, forcing them to maintain separate layers just to understand how information connects. Citations are an after-thought today.  
-
-Our approach solves both these problems with a fundamental insight. 
-Information has natural connections - from documents to sections to paragraphs to sentences. This isn't arbitrary; it's how humans organize and understand knowledge. So why do we let AI systems break them apart? 
-
 ## Introduction
 
 Supermat introduces a novel data representation framework for the AI era, making relationships explicit and retrievable by design.
@@ -116,6 +103,8 @@ Key Metrics:
 > **Accuracy: +15.56% | Faithfulness: +12.53% | ROUGE-1 Recall: +33.33%**
 
 In our internal evaluation, we see double-digit lifts in factual correctness and broader coverage with more complete outputs. This translates to fewer hallucinations and more trust in automated answers.
+
+For more details, take a look [here](https://supermatai.github.io/supermat/Evaluation/).
 
 ## Conclusion
 
